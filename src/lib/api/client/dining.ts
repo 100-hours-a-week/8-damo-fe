@@ -43,9 +43,9 @@ export async function getDiningAttendanceVote(params: {
 export async function getDiningRestaurantVote(params: {
   groupId: string;
   diningId: string;
-}): Promise<ApiResponse<RestaurantVoteResponse>>{
+}): Promise<ApiResponse<RestaurantVoteResponse[]>>{
   const {groupId, diningId} = params;
-  return bffGet<RestaurantVoteResponse>(
+  return bffGet<RestaurantVoteResponse[]>(
     `/groups/${groupId}/dining/${diningId}/restaurant-vote`
   )
 }
