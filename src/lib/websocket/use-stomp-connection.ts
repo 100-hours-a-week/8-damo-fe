@@ -23,32 +23,18 @@ export function useStompConnection({
   onError,
 }: UseStompConnectionOptions) {
 
+  const BROKER_URL = process.env.NEXT_PUBLIC_API_URL;
   const clientRef = useRef<Client | null>(null);
-
-  const handlersRef = useRef({
-    onConnect, 
-    onDisconnect, 
-    onError
-  });
-
-  useEffect(() => {
-    handlersRef.current = {
-      onConnect, 
-      onDisconnect, 
-      onError
-    };
-  }, [onConnect, onDisconnect, onError]);
 
   const stableOnConnect = useStableEvent(onConnect);
   const stableOnDisconnect = useStableEvent(onDisconnect);
   const stableOnError = useStableEvent(onError);
 
-
   useEffect(() => {
-    if (!brokerURL || !accessToken) return;
+    if (!BROKER_URL || !accessToken) return;
 
     const client = createStompClient({
-      brokerURL, 
+      brokerURL: BROKER_URL, 
       accessToken,
       reconnectDelay, 
       onConnect: stableOnConnect, 
@@ -64,7 +50,7 @@ export function useStompConnection({
       client.deactivate();
       clientRef.current = null;
     };
-  }, [brokerURL, accessToken]);
+  }, [accessToken]);
 
   return {
     clientRef
