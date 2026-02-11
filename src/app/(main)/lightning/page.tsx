@@ -20,12 +20,10 @@ export default async function LightningPage({ searchParams }: PageProps) {
     ? resolvedSearchParams.tab
     : "recruiting";
 
-  let items =
+  const items =
     activeTab === "joined"
       ? await getJoinedLightnings()
       : await getRecruitingLightnings();
-
-  items = [];
 
   return (
     <Suspense fallback={<LightningPageFallback />}>
