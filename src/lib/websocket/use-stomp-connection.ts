@@ -6,7 +6,6 @@ import { createStompClient } from "./create-stomp-client";
 import { useStableEvent } from "@/src/hooks/use-stable-event";
 
 interface UseStompConnectionOptions {
-  brokerURL: string | null;
   accessToken: string | null;
   reconnectDelay?: number;
   onConnect?: (client: Client) => void;
@@ -15,7 +14,6 @@ interface UseStompConnectionOptions {
 }
 
 export function useStompConnection({
-  brokerURL,
   accessToken,
   reconnectDelay = 5000,
   onConnect,
