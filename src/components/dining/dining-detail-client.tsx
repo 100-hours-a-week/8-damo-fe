@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AttendanceVotingSection,
@@ -10,19 +9,13 @@ import {
 } from "@/src/components/dining";
 import { DiningCommonSection } from "@/src/components/dining/common";
 import { DiningErrorToast } from "@/src/components/dining/dining-error-toast";
-import type {
-  AttendanceVoteResponse,
-  ConfirmedRestaurantResponse,
-  DiningCommonResponse,
-  DiningStatus,
-  RestaurantVoteResponse,
-} from "@/src/types/api/dining";
+import type { DiningCommonResponse } from "@/src/types/api/dining";
 import {
-  getDiningCommon,
   getDiningAttendanceVote,
+  getDiningCommon,
+  getDiningConfirmed,
   getDiningRestaurantVote,
-  getDiningConfirmed
-} from "@/src/lib/api/client/dining"
+} from "@/src/lib/api/client/dining";
 
 const POLLING_INTERVAL_MS = 5_000;
 
@@ -37,113 +30,79 @@ export function DiningDetailClient({
   diningId,
   initialDiningCommon,
 }: DiningDetailClientProps) {
-  const [attendanceVote, setAttendanceVote] =
-    useState<AttendanceVoteResponse | null>(null);
-  const [restaurantVotes, setRestaurantVotes] =
-    useState<RestaurantVoteResponse[] | null>(null);
-  const [confirmedRestaurant, setConfirmedRestaurant] =
-    useState<ConfirmedRestaurantResponse | null>(null);
-
-  const lastStatusRef = useRef<DiningStatus>(initialDiningCommon.diningStatus);
-  const initializedRef = useRef(false);
- 
   const {
     data: diningCommon,
     error: diningCommonError,
   } = useQuery({
-    queryKey: ["dining-common", groupId, diningId],
+    queryKey: ["dining", "detail", groupId, diningId, "common"],
     queryFn: async () => {
-      const response = await getDiningCommon({groupId, diningId});
+      const response = await getDiningCommon({ groupId, diningId });
       return response.data;
     },
     initialData: initialDiningCommon,
-    refetchInterval: (query) =>
-      query.state.data?.diningStatus === "CONFIRMED"
-        ? false
-        : POLLING_INTERVAL_MS,
-    refetchOnWindowFocus: false
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchOnWindowFocus: false,
   });
 
-  const resetSectionData = () => {
-    setAttendanceVote(null);
-    setRestaurantVotes(null);
-    setConfirmedRestaurant(null);
-  };
-  
-  const fetchSectionData = async (status: DiningStatus) => {
-    resetSectionData();
+  const diningStatus = diningCommon?.diningStatus;
+  const isAttendanceVoting = diningStatus === "ATTENDANCE_VOTING";
+  const isRestaurantVoting = diningStatus === "RESTAURANT_VOTING";
+  const isConfirmed = diningStatus === "CONFIRMED";
 
-    if (status === "RECOMMENDATION_PENDING") {
-      return;
-    }
+  const { data: attendanceVote } = useQuery({
+    queryKey: ["dining", "detail", groupId, diningId, "attendance-vote"],
+    queryFn: async () => {
+      const response = await getDiningAttendanceVote({ groupId, diningId });
+      return response.data;
+    },
+    enabled: isAttendanceVoting,
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchOnWindowFocus: false,
+  });
 
-    if (status === "ATTENDANCE_VOTING") {
-      try {
-        const response = await getDiningAttendanceVote({groupId, diningId});
-        setAttendanceVote(response.data);
-      } catch (error) {
-        console.error("[DiningDetailClient] Failed to load attendance vote", error);
-      }
-    }
+  const { data: restaurantVotes } = useQuery({
+    queryKey: ["dining", "detail", groupId, diningId, "restaurant-vote"],
+    queryFn: async () => {
+      const response = await getDiningRestaurantVote({ groupId, diningId });
+      return response.data;
+    },
+    enabled: isRestaurantVoting,
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchOnWindowFocus: false,
+  });
 
-    if (status === "RESTAURANT_VOTING") {
-      try {
-        const response = await getDiningRestaurantVote({groupId, diningId});
-        setRestaurantVotes(response.data);
-      } catch (error) {
-        console.error("[DiningDetailClient] Failed to load restaurant vote", error);
-      }
-    }
-
-    if (status === "CONFIRMED") {
-      try {
-        const response = await getDiningConfirmed({groupId, diningId});
-        setConfirmedRestaurant(response.data);
-      } catch (error) {
-        console.error("[DiningDetailClient] Failed to load confirmed restaurant", error);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (!diningCommon) return;
-
-    const nextStatus = diningCommon.diningStatus;
-    const isInitial = !initializedRef.current;
-    const isChanged = nextStatus !== lastStatusRef.current;
-
-    if (isInitial || isChanged) {
-      lastStatusRef.current = nextStatus;
-      initializedRef.current = true;
-      queueMicrotask(() => {
-        void fetchSectionData(nextStatus);
-      });
-    }
-  }, [diningCommon?.diningStatus]);
+  const { data: confirmedRestaurant } = useQuery({
+    queryKey: ["dining", "detail", groupId, diningId, "confirmed"],
+    queryFn: async () => {
+      const response = await getDiningConfirmed({ groupId, diningId });
+      return response.data;
+    },
+    enabled: isConfirmed,
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchOnWindowFocus: false,
+  });
 
   if (!diningCommon) {
     return (
       <>
         {diningCommonError && (
-          <DiningErrorToast messages={[diningCommonError.message]}/>
+          <DiningErrorToast messages={[diningCommonError.message]} />
         )}
       </>
     );
   }
 
-  const diningStatus = diningCommon.diningStatus;
-
   return (
     <DiningCommonSection
       diningDate={diningCommon.diningDate}
-      diningStatus={diningStatus}
+      diningStatus={diningCommon.diningStatus}
       diningParticipants={diningCommon.diningParticipants}
       isGroupLeader={diningCommon.isGroupLeader}
     >
       {diningCommonError && (
-        <DiningErrorToast messages={[diningCommonError.message]}/>
+        <DiningErrorToast messages={[diningCommonError.message]} />
       )}
-      {diningStatus === "ATTENDANCE_VOTING" && attendanceVote && (
+      {diningCommon.diningStatus === "ATTENDANCE_VOTING" && attendanceVote && (
         <AttendanceVotingSection
           progress={{
             totalCount: attendanceVote.totalGroupMemberCount,
@@ -153,19 +112,19 @@ export function DiningDetailClient({
           myVoteStatus={attendanceVote.attendanceVoteStatus}
         />
       )}
-      {diningStatus === "RESTAURANT_VOTING" && restaurantVotes && (
+      {diningCommon.diningStatus === "RESTAURANT_VOTING" && restaurantVotes && (
         <RestaurantVotingSection
           restaurants={restaurantVotes}
           isGroupLeader={diningCommon.isGroupLeader}
           canAdditionalAttend={false}
         />
       )}
-      {diningStatus === "RECOMMENDATION_PENDING" && (
+      {diningCommon.diningStatus === "RECOMMENDATION_PENDING" && (
         <RecommendationPendingSection />
       )}
-      {diningStatus === "CONFIRMED" && (
+      {diningCommon.diningStatus === "CONFIRMED" && (
         <ConfirmedSection
-          restaurant={confirmedRestaurant}
+          restaurant={confirmedRestaurant ?? null}
           fallbackDescription="다시 시도해주세요"
         />
       )}
