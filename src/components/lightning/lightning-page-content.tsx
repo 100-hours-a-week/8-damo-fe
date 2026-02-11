@@ -1,16 +1,17 @@
 "use client";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { MOCK_LIGHTNING_ITEMS } from "./mock-lightning-item";
 import { LightningCard } from "./lightning-card";
+import { LightningEmptyState } from "./lightning-empty-state";
 import { useRouter } from "next/navigation";
 import { BottomNavigationBar } from "@/src/components/layout";
 import { Button } from "@/src/components/ui/button";
 import { SegmentedTabs } from "@/src/components/ui/segmented-tabs";
-import type { LightningTab } from "@/src/types/lightning";
+import type { LightningTab, LightningItem } from "@/src/types/lightning";
 
 interface LightningPageContentProps {
   activeTab: LightningTab;
+  items: LightningItem[];
 }
 
 const TAB_OPTIONS: { value: LightningTab; label: string }[] = [
@@ -18,12 +19,8 @@ const TAB_OPTIONS: { value: LightningTab; label: string }[] = [
   { value: "joined", label: "내가 참여한 번개" },
 ];
 
-export function LightningPageContent({ activeTab }: LightningPageContentProps) {
+export function LightningPageContent({ items, activeTab }: LightningPageContentProps) {
   const router = useRouter();
-  const items =
-    activeTab === "joined"
-      ? MOCK_LIGHTNING_ITEMS.filter((item) => item.joined)
-      : MOCK_LIGHTNING_ITEMS;
 
   return (
     <>
@@ -42,9 +39,11 @@ export function LightningPageContent({ activeTab }: LightningPageContentProps) {
         />
 
         <section className="mt-4 flex flex-col gap-3">
-          {items.map((item) => (
-            <LightningCard key={item.id} item={item} />
-          ))}
+          {items.length > 0 ? (
+            items.map((item) => <LightningCard key={item.id} item={item} />)
+          ) : (
+            <LightningEmptyState activeTab={activeTab} />
+          )}
         </section>
       </main>
       <div className="pointer-events-none fixed bottom-20 left-1/2 w-full max-w-[430px] -translate-x-1/2 px-4">

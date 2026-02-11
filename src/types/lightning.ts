@@ -3,13 +3,12 @@ export type LightningTab = "recruiting" | "joined";
 export type LocationPermission = "unknown" | "granted" | "denied";
 
 export interface LightningItem {
-  id: number;
-  description: string;
+  id: string;
   restaurantName: string;
-  dateLabel: string;
-  currentParticipants: number;
+  description: string;
   maxParticipants: number;
-  joined: boolean;
+  participantsCount: number;
+  dateLabel: string;
 }
 
 export interface LightningParticipant {

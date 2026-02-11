@@ -14,3 +14,28 @@ export const formatDateToMinute = (date: Date): string => {
 
     return `${yyyy}-${MM}-${dd} ${HH}:${mm}`;
 }
+
+const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const timeFormatter = new Intl.DateTimeFormat("ko-KR", {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+export function formatLightningDateLabel(lightningDate: string): string {
+  const parsedDate = new Date(lightningDate);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return lightningDate;
+  }
+
+  const dateLabel = dateFormatter.format(parsedDate);
+  const timeLabel = timeFormatter.format(parsedDate);
+
+  return `${dateLabel} · ${timeLabel}`;
+}
