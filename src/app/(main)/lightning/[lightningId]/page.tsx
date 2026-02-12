@@ -1,22 +1,29 @@
-import { notFound } from "next/navigation";
-import { LightningDetailPageContent } from "@/src/components/lightning/detail/lightning-detail-page-content";
-import { getMockLightningDetailById } from "@/src/components/lightning/detail/mock-lightning-detail";
+import { getAccessToken } from "@/src/lib/cookie";
+import { redirect } from "next/navigation";
+import { LightningChatClient } from "@/src/components/lightning/chat/lightning-chat-client";
 
-interface LightningDetailPageProps {
+interface Props {
   params: Promise<{
     lightningId: string;
   }>;
 }
 
-export default async function LightningDetailPage({
+export default async function LightningChatPage({
   params,
-}: LightningDetailPageProps) {
+}: Props) {
   const { lightningId } = await params;
-  const detail = getMockLightningDetailById(lightningId);
+  const accessToken = await getAccessToken();
 
-  if (!detail) {
-    notFound();
+  if (!accessToken) {
+    redirect("/login");
   }
 
-  return <LightningDetailPageContent detail={detail} />;
+  return (
+    <div className="flex h-dvh flex-col">
+      <LightningChatClient
+        lightningId={lightningId}
+        accessToken={accessToken}
+      />
+    </div>
+  );
 }
