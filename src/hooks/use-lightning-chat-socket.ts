@@ -90,7 +90,7 @@ export function useLightningChatSocket({
       };
 
       client.publish({
-        destination: `pub/message/${lightningId}`,
+        destination: `/pub/message/${lightningId}`,
         body: JSON.stringify(body),
       });
     },

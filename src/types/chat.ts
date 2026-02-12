@@ -6,6 +6,7 @@ export interface ChatMessageRequest {
 }
 
 export interface ChatBroadcastMessage {
+  messageId: string;
   senderId: string;
   lightningId: string;
   chatType: ChatType;
