@@ -2,20 +2,18 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-export function useStableEvent<T extends(...args: T[]) => T>(
+export function useStableEvent<T extends (...args: unknown[]) => unknown>(
   handler?: T
 ): T {
   const handlerRef = useRef<T | undefined>(handler);
 
   useEffect(() => {
-    if (!handlerRef.current) {
-      throw new Error("Handler is not defined");
-    }
-
     handlerRef.current = handler;
   }, [handler]);
 
-  return useCallback(((...args: T[]) => {
+  const stableHandler = useCallback((...args: Parameters<T>) => {
     return handlerRef.current?.(...args);
-  }) as T, []);
+  }, []);
+
+  return stableHandler as T;
 }
