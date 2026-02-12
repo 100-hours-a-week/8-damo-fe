@@ -25,6 +25,21 @@ export function useLightningChatSocket({
   const lightningIdRef = useRef(lightningId);
   useEffect(() => {lightningIdRef.current = lightningId}, [lightningId]);
 
+  const { clientRef } = useStompConnection({
+    accessToken,
+    onConnect: () => {
+      setState("connected");
+      setError(null);
+    },
+    onDisconnect: () => {
+      setState("disconnected");
+    },
+    onError: () => {
+      setState("error");
+      setError("채팅 연결에 실패했습니다.");
+    },
+  });
+
   const subscribeCurrentRoom = useCallback(() => {
     const client = clientRef.current;
     if (!client || !client.connected) return;
@@ -49,23 +64,7 @@ export function useLightningChatSocket({
     );
 
     subscriptionRef.current = sub;
-  }, []);
-
-  const { clientRef } = useStompConnection({
-    accessToken,
-    onConnect: () => {
-      setState("connected");
-      setError(null);
-      subscribeCurrentRoom();
-    },
-    onDisconnect: () => {
-      setState("disconnected");
-    },
-    onError: () => {
-      setState("error");
-      setError("채팅 연결에 실패했습니다.");
-    },
-  });
+  }, [clientRef]);
 
   useEffect(()=> {
     if (state === "connected"){
@@ -95,7 +94,7 @@ export function useLightningChatSocket({
         body: JSON.stringify(body),
       });
     },
-    [lightningId]
+    [clientRef, lightningId]
   );
   
   useEffect(() => {
