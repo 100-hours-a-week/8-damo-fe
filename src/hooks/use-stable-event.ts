@@ -1,8 +1,9 @@
-"use client"
-
+"use client";
 import { useCallback, useEffect, useRef } from "react";
 
-export function useStableEvent<T extends (...args: any[]) => any>(
+type AnyFunction = (...args: never[]) => unknown;
+
+export function useStableEvent<T extends AnyFunction>(
   handler?: T
 ): T {
   const handlerRef = useRef<T | undefined>(handler);
@@ -12,9 +13,11 @@ export function useStableEvent<T extends (...args: any[]) => any>(
   }, [handler]);
 
   const stableHandler = useCallback(
-    (...args: Parameters<T>): ReturnType<T> | undefined => {
-    return handlerRef.current?.(...args);
-  }, []);
+    (...args: Parameters<T>): ReturnType<T> => {
+      return (handlerRef.current as AnyFunction)?.(...args) as ReturnType<T>;
+    },
+    []
+  );
 
   return stableHandler as T;
 }
