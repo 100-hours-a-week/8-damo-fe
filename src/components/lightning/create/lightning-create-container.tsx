@@ -13,7 +13,7 @@ import { RecommendedRestaurantSection } from "./recommended-restaurant-section";
 import { useLightningLocation } from "@/src/hooks/lightning/create/use-lightning-location";
 import { useLightningDescription } from "@/src/hooks/lightning/create/use-lightning-description";
 
-import { MOCK_RECOMMENDED_RESTAURANTS } from "./mock-recommended-restaurant";
+import { MOCK_RECOMMENDED_RESTAURANTS } from "../mock/mock-recommended-restaurant";
 import { createLightning } from "@/src/lib/api/client/lightning";
 import { formatDateToMinute } from "@/src/lib/utils";
 
