@@ -1,6 +1,6 @@
 import "server-only";
 import { serverGet } from "./index";
-import type { LightningItem } from "@/src/types/lightning";
+import type { LightningItem, LightningStatus } from "@/src/types/lightning";
 import { formatLightningDateLabel } from "@/src/lib/utils";
 
 interface MyLightningResponse {
@@ -21,6 +21,7 @@ function mapLightningItems(data: MyLightningResponse[]): LightningItem[] {
     description: lightning.description,
     maxParticipants: lightning.maxParticipants,
     participantsCount: lightning.participantsCount,
+    lightningStatus: lightning.lightningStatus,
     dateLabel: formatLightningDateLabel(
       lightning.lightningDate ?? lightning.lightningData ?? ""
     ),
