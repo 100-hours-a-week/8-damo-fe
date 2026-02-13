@@ -96,6 +96,7 @@
         },
         onWebSocketClose: (evt) => {
           this.log("onWebSocketClose", { code: evt.code, reason: evt.reason });
+          this.clearSubscriptionHandles();
         },
         onStompError: (frame) => {
           this.log("onStompError", frame);
@@ -125,6 +126,7 @@
         } catch (error) {
           this.log("disconnect error", error);
         } finally {
+          this.clearSubscriptionHandles();
           this.client = null;
           this.log("disconnect done");
         }
@@ -133,6 +135,12 @@
       this.deactivating = p;
       await p;
       this.deactivating = null;
+    }
+
+    private clearSubscriptionHandles() {
+      for (const [key, def] of this.registry.entries()) {
+        this.registry.set(key, { ...def, sub: undefined });
+      }
     }
 
     subscribe(key: SubscriptionKey, destination: string, handler: MessageHandler) {
