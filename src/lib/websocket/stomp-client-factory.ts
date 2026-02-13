@@ -1,6 +1,7 @@
   import { Client } from "@stomp/stompjs";
 
   interface CreateStompClientOptions {
+    brokerURL: string;
     accessToken: string;
     reconnectDelay: number;
     onConnect: (client: Client) => void;
@@ -10,6 +11,7 @@
   }
 
   export function createStompClient({
+    brokerURL,
     accessToken,
     reconnectDelay,
     onConnect,
@@ -17,7 +19,6 @@
     onStompError,
     debug = false,
   }: CreateStompClientOptions) {
-    const brokerURL = process.env.NEXT_PUBLIC_BROKER_URL;
     const client = new Client({
       brokerURL,
       reconnectDelay,
