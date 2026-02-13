@@ -2,6 +2,8 @@ export type LightningTab = "recruiting" | "joined";
 
 export type LocationPermission = "unknown" | "granted" | "denied";
 
+export type LightningStatus = "OPEN" | "CLOSED" | "DONE" | string;
+
 export interface LightningItem {
   id: string;
   restaurantName: string;
@@ -9,12 +11,14 @@ export interface LightningItem {
   maxParticipants: number;
   participantsCount: number;
   dateLabel: string;
+  lightningStatus?: LightningStatus;
 }
 
 export interface LightningParticipant {
   id: string;
   nickname: string;
   avatarUrl?: string | null;
+  role?: string;
 }
 
 export interface LightningDetail {
@@ -25,6 +29,7 @@ export interface LightningDetail {
   currentParticipants: number;
   maxParticipants: number;
   description: string;
+  lightningStatus?: LightningStatus;
   location: {
     lat: number;
     lng: number;
