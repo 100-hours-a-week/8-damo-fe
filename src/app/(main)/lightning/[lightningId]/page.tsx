@@ -20,10 +20,7 @@ export default async function LightningChatPage({
 
   return (
     <div className="flex h-dvh flex-col">
-      <LightningChatClient
-        lightningId={lightningId}
-        accessToken={accessToken}
-      />
+      <LightningChatClient lightningId={lightningId}/>
     </div>
   );
 }
