@@ -1,113 +1,49 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ChatMessageRequest, ChatConnectionState, ChatBroadcastMessage } from "../types/chat";
-import { IMessage, StompSubscription } from "@stomp/stompjs";
-import { useStompConnection } from "../lib/websocket/use-stomp-connection";
+"use client";
+
+import { useCallback, useState } from "react";
+import type { IMessage } from "@stomp/stompjs";
+import type { ChatBroadcastMessage, ChatMessageRequest } from "@/src/types/chat";
+import { socketManager } from "@/src/lib/websocket/socket-manager";
+import { useChatRoomSubscription } from "@/src/lib/websocket/use-chat-room-subscription";
 
 interface UseLightningChatSocketOptions {
   lightningId: string;
-  accessToken: string | null;
 }
 
-export function useLightningChatSocket({
-  lightningId,
-  accessToken,
-}: UseLightningChatSocketOptions){
-  const [state, setState] =
-    useState<ChatConnectionState>("idle");
-  const [error, setError] =
-    useState<string | null>(null);
-  const [messages, setMessages] =
-    useState<ChatBroadcastMessage[]>([]);
+export function useLightningChatSocket({ lightningId }: UseLightningChatSocketOptions) {
+  const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatBroadcastMessage[]>([]);
 
-  const subscriptionRef =
-    useRef<StompSubscription | null>(null);
-
-  const lightningIdRef = useRef(lightningId);
-  useEffect(() => {lightningIdRef.current = lightningId}, [lightningId]);
-
-  const { clientRef } = useStompConnection({
-    accessToken,
-    onConnect: () => {
-      setState("connected");
-      setError(null);
-    },
-    onDisconnect: () => {
-      setState("disconnected");
-    },
-    onError: () => {
-      setState("error");
-      setError("채팅 연결에 실패했습니다.");
-    },
-  });
-
-  const subscribeCurrentRoom = useCallback(() => {
-    const client = clientRef.current;
-    if (!client || !client.connected) return;
-
-    subscriptionRef.current?.unsubscribe();
-    subscriptionRef.current = null;
-
-    const currentId = lightningIdRef.current;
-
-    const sub = client.subscribe(
-      `/sub/lightning/${currentId}`,
-      (payload: IMessage) => {
-        try {
-          const parsed =
-            JSON.parse(payload.body) as ChatBroadcastMessage;
-
-          setMessages((prev) => [...prev, parsed]);
-        } catch {
-          setError("메시지를 읽지 못했습니다.");
-        }
-      }
-    );
-
-    subscriptionRef.current = sub;
-  }, [clientRef]);
-
-  useEffect(()=> {
-    if (state === "connected"){
-      subscribeCurrentRoom();
+  const onMessage = useCallback((payload: IMessage) => {
+    try {
+      const parsed = JSON.parse(payload.body) as ChatBroadcastMessage;
+      setMessages((prev) => [...prev, parsed]);
+    } catch {
+      setError("메시지를 읽지 못했습니다.");
     }
-  }, [lightningId, state, subscribeCurrentRoom]);
+  }, []);
+
+  useChatRoomSubscription(lightningId, onMessage);
 
   const sendMessage = useCallback(
     (content: string) => {
       const trimmed = content.trim();
       if (!trimmed) return;
 
-      const client = clientRef.current;
-
-      if (!client || !client.connected) {
-        setError("연결 후 다시 시도해주세요.");
-        return;
-      }
-
       const body: ChatMessageRequest = {
         chatType: "TEXT",
         content: trimmed,
       };
 
-      client.publish({
-        destination: `/pub/message/${lightningId}`,
-        body: JSON.stringify(body),
-      });
+      try {
+        socketManager.publish(`/pub/message/${lightningId}`, JSON.stringify(body));
+        setError(null);
+      } catch {
+        setError("연결 후 다시 시도해주세요.");
+      }
     },
-    [clientRef, lightningId]
+    [lightningId]
   );
-  
-  useEffect(() => {
-    return () => {
-      subscriptionRef.current?.unsubscribe();
-      subscriptionRef.current = null;
-    };
-  }, []);
 
-  return {
-    state, 
-    error,
-    messages,
-    sendMessage
-  };
+  return { error, messages, sendMessage };
 }
