@@ -25,7 +25,7 @@ export function LightningDetailClient({ lightningId }: LightningDetailClientProp
 
   if (isPending) {
     return (
-      <div className="mx-auto flex min-h-dvh w-full min-w-[320px] max-w-[430px] flex-col bg-[#fffaf5] px-4 pb-8 pt-4">
+      <div className="mx-auto flex min-h-dvh w-full min-w-[320px] max-w-[430px] flex-col bg-background px-4 pb-8 pt-4">
         <div className="h-12 animate-pulse rounded-2xl bg-[#f1e7dc]" />
         <div className="mt-4 h-52 animate-pulse rounded-2xl bg-[#f1e7dc]" />
         <div className="mt-4 h-44 animate-pulse rounded-2xl bg-[#f1e7dc]" />

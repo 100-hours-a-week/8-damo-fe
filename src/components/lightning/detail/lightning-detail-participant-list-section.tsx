@@ -22,9 +22,6 @@ export function LightningDetailParticipantListSection({
           <h2 className="text-sm font-semibold text-[#111111]">
             참여자 {currentParticipants}명
           </h2>
-          <span className="text-xs font-medium text-[#8e8e93]">
-            {remainingSeats > 0 ? `남은 ${remainingSeats}자리` : "정원 마감"}
-          </span>
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">

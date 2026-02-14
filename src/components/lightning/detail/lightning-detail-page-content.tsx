@@ -52,13 +52,7 @@ export function LightningDetailPageContent({
 
       </main>
 
-      <div className="sticky bottom-0 border-t border-[#f3e6da] bg-[#fffaf5]/90 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-[#fffaf5]/75">
-        <div className="mb-2 flex items-center justify-between text-xs font-medium text-[#8e8e93]">
-          <span>
-            참여 인원 {detail.currentParticipants}/{detail.maxParticipants}명
-          </span>
-          <span>{canParticipate ? `남은 ${remainingSeats}자리` : "정원 마감"}</span>
-        </div>
+      <div className="sticky bottom-0 px-4 py-3 backdrop-blur">
         <Button
           disabled={!canParticipate}
           className="h-12 w-full rounded-2xl text-base font-semibold shadow-sm disabled:opacity-50"
