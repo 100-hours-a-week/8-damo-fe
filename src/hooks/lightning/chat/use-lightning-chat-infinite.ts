@@ -13,6 +13,7 @@ import type {
   GetLightningChatMessagesParams
 } from "@/src/types/api/lightning/chat";
 import type { ChatBroadcastMessage } from "@/src/types/chat";
+import { recoverMissedMessagesFromServer } from "@/src/lib/lightning/chat/recover-missed-messages";
 
 const CHAT_PAGE_SIZE = 30;
 
@@ -117,44 +118,14 @@ export function useLightningChatInfinite({
       return current > max ? current : max;
     }, 0);
   }, [messages]);
-
   const recoverMissedMessages = useCallback(async () => {
-    if (maxMessageId <= 0) return;
-
-    const recoveredResponse = await getLightningChatMessages({
+    await recoverMissedMessagesFromServer(
+      queryClient,
+      queryKey,
       lightningId,
-      direction: "NEXT",
-      cursorId: maxMessageId,
-      size,
-    });
-
-    const recoveredPage = recoveredResponse.data;
-    if (recoveredPage.messages.length === 0) return;
-
-    queryClient.setQueryData<ChatInfiniteData>(queryKey, (old) => {
-      if (!old || old.pages.length === 0) return old;
-
-      const pagesCopy = [...old.pages];
-      const lastIndex = pagesCopy.length - 1;
-      const lastPage = pagesCopy[lastIndex];
-
-      pagesCopy[lastIndex] = {
-        ...lastPage,
-        messages: dedupeAndSortById([
-          ...lastPage.messages,
-          ...recoveredPage.messages,
-        ]),
-        pageInfo: {
-          ...lastPage.pageInfo,
-          nextPageParam: recoveredPage.pageInfo.nextPageParam,
-        },
-      };
-
-      return {
-        ...old,
-        pages: pagesCopy,
-      };
-    });
+      maxMessageId,
+      size
+    );
   }, [lightningId, maxMessageId, queryClient, queryKey, size]);
 
   return {
