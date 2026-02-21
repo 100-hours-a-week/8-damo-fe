@@ -1,6 +1,6 @@
 "use client"
 import type { RestaurantVoteResponse } from "@/src/types/api/dining";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { RestaurantCard } from "./restaurant-card";
 import { RestaurantVotingCarousel } from "./restaurant-voting-carousel";
 import { RestaurantVoteFallback } from "./restaurant-vote-fallback";
@@ -35,6 +35,7 @@ export function RestaurantVotingSection({
   onRetryRecommendation,
   onAdditionalAttend,
 }: RestaurantVotingSectionProps) {
+  const router = useRouter();
   const params = useParams<{ groupId?: string | string[]; diningId?: string | string[] }>();
   const resolveParam = (value?: string | string[]) =>
     Array.isArray(value) ? value[0] : value;
@@ -61,8 +62,22 @@ export function RestaurantVotingSection({
     return <RestaurantVoteFallback />;
   }
 
+  const moveToReceiptPage = () => {
+    if (!groupId || !diningId) {
+      toast.error("경로 정보를 확인할 수 없습니다.");
+      return;
+    }
+
+    router.push(`/groups/${groupId}/dining/${diningId}/receipt`);
+  };
+
   const handleConfirmDining = (restaurantId: number) => {
-    onConfirmDining?.(restaurantId);
+    if (onConfirmDining) {
+      onConfirmDining(restaurantId);
+      return;
+    }
+
+    moveToReceiptPage();
   };
 
   const handleRetryRecommendation = async () => {
@@ -103,6 +118,11 @@ export function RestaurantVotingSection({
   };
 
   const handleConfirmClick = () => {
+    if (isGroupLeader) {
+      moveToReceiptPage();
+      return;
+    }
+
     setIsDialogOpen(true);
   };
 
