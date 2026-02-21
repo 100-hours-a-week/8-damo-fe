@@ -61,6 +61,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Create .env.production
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            API_URL="${{ secrets.NEXT_PUBLIC_API_URL_PROD }}"
+            REDIRECT_URI="${{ secrets.NEXT_PUBLIC_KAKAO_REDIRECT_URI_PROD }}"
+            BROKER_URL="${{ secrets.NEXT_PUBLIC_BROKER_URL_PROD }}"
+          else
+            API_URL="${{ secrets.NEXT_PUBLIC_API_URL_DEV }}"
+            REDIRECT_URI="${{ secrets.NEXT_PUBLIC_KAKAO_REDIRECT_URI_DEV }}"
+            BROKER_URL="${{ secrets.NEXT_PUBLIC_BROKER_URL_DEV }}"
+          fi
+          {
+            echo "NEXT_PUBLIC_API_URL=${API_URL}"
+            echo "NEXT_PUBLIC_KAKAO_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KAKAO_CLIENT_ID }}"
+            echo "NEXT_PUBLIC_KAKAO_REDIRECT_URI=${REDIRECT_URI}"
+            echo "NEXT_PUBLIC_S3_CDN=${{ secrets.NEXT_PUBLIC_S3_CDN }}"
+            echo "NEXT_PUBLIC_KAKAO_SDK_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_SDK_KEY }}"
+            echo "NEXT_PUBLIC_KAKAO_SDK_TEST_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_MAP_KEY }}"
+            echo "NEXT_PUBLIC_URL=${{ secrets.NEXT_PUBLIC_URL }}"
+            echo "NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY }}"
+            echo "NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}"
+            echo "NEXT_PUBLIC_BROKER_URL=${BROKER_URL}"
+            echo "NEXT_PUBLIC_RECEIPT_WASM=${{ secrets.NEXT_PUBLIC_RECEIPT_WASM }}"
+            echo "NEXT_PUBLIC_RECEIPT_MODEL=${{ secrets.NEXT_PUBLIC_RECEIPT_MODEL }}"
+          } > .env.production
+
       - name: Resolve environment
         env:
           ECR_REPO_DEV: 080598576517.dkr.ecr.ap-northeast-2.amazonaws.com/dev/fe
@@ -91,19 +117,6 @@ jobs:
           sbom: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            NEXT_PUBLIC_API_URL=${{ github.ref_name == 'main' && secrets.NEXT_PUBLIC_API_URL_PROD || secrets.NEXT_PUBLIC_API_URL_DEV }}
-            NEXT_PUBLIC_KAKAO_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KAKAO_CLIENT_ID }}
-            NEXT_PUBLIC_KAKAO_REDIRECT_URI=${{ github.ref_name == 'main' && secrets.NEXT_PUBLIC_KAKAO_REDIRECT_URI_PROD || secrets.NEXT_PUBLIC_KAKAO_REDIRECT_URI_DEV }}
-            NEXT_PUBLIC_S3_CDN=${{ secrets.NEXT_PUBLIC_S3_CDN }}
-            NEXT_PUBLIC_KAKAO_SDK_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_SDK_KEY }}
-            NEXT_PUBLIC_KAKAO_SDK_TEST_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_MAP_KEY }}
-            NEXT_PUBLIC_URL=${{ secrets.NEXT_PUBLIC_URL }}
-            NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY }}
-            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
-            NEXT_PUBLIC_BROKER_URL=${{ github.ref_name == 'main' && secrets.NEXT_PUBLIC_BROKER_URL_PROD || secrets.NEXT_PUBLIC_BROKER_URL_DEV }}
-            NEXT_PUBLIC_RECEIPT_WASM=${{ secrets.NEXT_PUBLIC_RECEIPT_WASM }}
-            NEXT_PUBLIC_RECEIPT_MODEL=${{ secrets.NEXT_PUBLIC_RECEIPT_MODEL }}
 
   deploy:
     name: CD (Docker deploy)
