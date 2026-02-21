@@ -102,6 +102,8 @@ jobs:
             NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY }}
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
             NEXT_PUBLIC_BROKER_URL=${{ github.ref_name == 'main' && secrets.NEXT_PUBLIC_BROKER_URL_PROD || secrets.NEXT_PUBLIC_BROKER_URL_DEV }}
+            NEXT_PUBLIC_RECEIPT_WASM=${{ secrets.NEXT_PUBLIC_RECEIPT_WASM }}
+            NEXT_PUBLIC_RECEIPT_MODEL=${{ secrets.NEXT_PUBLIC_RECEIPT_MODEL }}
 
   deploy:
     name: CD (Docker deploy)
