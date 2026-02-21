@@ -83,7 +83,15 @@ export function ReceiptPageClient({
       }
 
       case "success": {
-        return <SuccessPanel analysisResult={viewState.analysisResult} />;
+        return (
+          <SuccessPanel
+            previewUrl={viewState.previewUrl}
+            imageAlt="유효한 영수증 이미지"
+            title="유효한 영수증입니다."
+            description="현재 영수증으로 회식을 확정할까요?"
+            analysisResult={viewState.analysisResult}
+          />
+        );
       }
 
       case "invalid_receipt": {

@@ -1,47 +1,34 @@
 import { SectionCard } from "../../ui/section-card";
 import { CheckCircle2 } from "lucide-react";
 import { ReceiptAnalysisResult } from "../receipt-page-client";
+import Image from "next/image";
 
 interface SuccessPanelProps {
-  analysisResult: ReceiptAnalysisResult;
-}
-
-function formatConfidence(confidence: number) {
-  if (!Number.isFinite(confidence)) {
-    return "-";
-  }
-
-  const percentage = Math.max(0, Math.min(100, confidence * 100));
-  return `${percentage.toFixed(1)}%`;
+  previewUrl: string;
+  title: string;
+  description: string;
+  imageAlt: string;
+  analysisResult: ReceiptAnalysisResult
 }
 
 export function SuccessPanel({
-  analysisResult,
+  previewUrl,
+  title,
+  description,
+  imageAlt,
+  analysisResult
 }: SuccessPanelProps) {
   return (
     <>
-      <SectionCard tone="muted" className="rounded-2xl bg-[#f2f2f7] p-5 shadow-none">
-        <h2 className="text-xl font-bold text-[#111111]">검증 리포트</h2>
-        <div className="mt-4 flex flex-col divide-y divide-[#d9d9df] rounded-xl border border-[#d9d9df] bg-white">
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-[#666a73]">분류 결과</span>
-            <strong className="text-base text-[#111111]">
-              {analysisResult.isReceipt ? "영수증" : "비영수증"}
-            </strong>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-[#666a73]">신뢰도</span>
-            <strong className="text-base text-[#111111]">
-              {formatConfidence(analysisResult.confidence)}
-            </strong>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-[#666a73]">검증 시각</span>
-            <strong className="text-base text-[#111111]">
-              {analysisResult.analyzedAt}
-            </strong>
-          </div>
-        </div>
+      <SectionCard tone="muted" className="rounded-2xl bg-[#f2f2f7] p-4 shadow-none">
+        <Image
+          src={previewUrl}
+          alt={imageAlt}
+          width={640}
+          height={380}
+          unoptimized
+          className="h-[190px] w-full rounded-xl object-cover"
+        />
       </SectionCard>
 
       <SectionCard className="rounded-2xl border-[#22c55e] bg-[#ecfdf3] p-4 shadow-none">
@@ -49,7 +36,7 @@ export function SuccessPanel({
           <CheckCircle2 className="mt-0.5 size-6 text-[#16a34a]" />
           <div className="flex flex-col">
             <p className="text-xl font-bold text-[#166534]">검증 완료!</p>
-            <p className="text-sm text-[#15803d]">유효한 영수증입니다.</p>
+            <p className="text-sm text-[#15803d]">유효한 영수증입니다</p>
           </div>
         </div>
       </SectionCard>
