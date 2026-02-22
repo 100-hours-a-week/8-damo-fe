@@ -1,6 +1,6 @@
-export { AttendanceVotingSection } from "./attendance-voting/attendance-voting-section";
-export { RestaurantVotingSection } from "./restaurant-vote";
-export { ConfirmedSection } from "./confirmed/confirmed-section";
+export { AttendanceVotingContainer} from "@/src/components/dining/attendance-voting/attendance-vote-container";
+export { RestaurantVotingContainer} from "@/src/components/dining/restaurant-vote/restaurant-vote-container";
+export { ConfirmedContainer} from "@/src/components/dining/confirmed/confirmed-container";
 export { DiningCommonSection } from "./common";
 export { DiningHeader } from "./common";
 export { DiningStatusBadge } from "./common";
