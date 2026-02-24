@@ -22,8 +22,8 @@ export function LightningDetailClient({ lightningId }: LightningDetailClientProp
       const response = await getLightningDetail(lightningId);
       return response.data;
     },
-    staleTime: 10_000,
-    refetchOnWindowFocus: false,
+    staleTime: 120_000,
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 
