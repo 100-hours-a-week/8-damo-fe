@@ -10,13 +10,21 @@ import { LightningDetailParticipantListSection } from "./lightning-detail-partic
 interface LightningDetailPageContentProps {
   detail: LightningDetail;
   canParticipate: boolean;
+  isParticipating: boolean;
+  onParticipate: () => void;
 }
 
 export function LightningDetailPageContent({
   detail,
-  canParticipate
+  canParticipate,
+  isParticipating,
+  onParticipate,
 }: LightningDetailPageContentProps) {
-  const buttonLabel = canParticipate ? "참가하기" : "참가 마감";
+  const buttonLabel = !canParticipate
+    ? "참가 마감"
+    : isParticipating
+      ? "참가 중..."
+      : "참가하기";
   const statusLabel = canParticipate ? "모집 중" : "모집 마감";
   const remainingSeats = Math.max(
     0,
@@ -54,7 +62,8 @@ export function LightningDetailPageContent({
 
       <div className="sticky bottom-0 px-4 py-3 backdrop-blur">
         <Button
-          disabled={!canParticipate}
+          onClick={onParticipate}
+          disabled={!canParticipate || isParticipating}
           className="h-12 w-full rounded-2xl text-base font-semibold shadow-sm disabled:opacity-50"
         >
           {buttonLabel}

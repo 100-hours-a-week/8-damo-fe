@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/src/components/ui/button";
 import { EmptyState } from "@/src/components/ui/empty-state";
-import { getLightningDetail } from "@/src/lib/api/client/lightning";
+import { getLightningDetail, joinLightning } from "@/src/lib/api/client/lightning";
 import { LightningDetailPageContent } from "./lightning-detail-page-content";
 
 interface LightningDetailClientProps {
@@ -12,6 +14,8 @@ interface LightningDetailClientProps {
 }
 
 export function LightningDetailClient({ lightningId }: LightningDetailClientProps) {
+  const router = useRouter();
+
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["lightning", "detail", lightningId],
     queryFn: async () => {
@@ -21,6 +25,17 @@ export function LightningDetailClient({ lightningId }: LightningDetailClientProp
     staleTime: 10_000,
     refetchOnWindowFocus: false,
     retry: 1,
+  });
+
+  const participateMutation = useMutation({
+    mutationFn: async () => joinLightning(lightningId),
+    onSuccess: () => {
+      toast.success("번개 참가가 완료되었습니다.");
+      router.push(`/lightning/${lightningId}`);
+    },
+    onError: () => {
+      toast.error("번개 참가에 실패했습니다. 다시 시도해주세요.");
+    },
   });
 
   if (isPending) {
@@ -53,5 +68,17 @@ export function LightningDetailClient({ lightningId }: LightningDetailClientProp
     data.lightningStatus === "OPEN" &&
     data.currentParticipants < data.maxParticipants;
 
-  return <LightningDetailPageContent detail={data} canParticipate={canParticipate} />;
+  const handleParticipate = () => {
+    if (!canParticipate || participateMutation.isPending) return;
+    participateMutation.mutate();
+  };
+
+  return (
+    <LightningDetailPageContent
+      detail={data}
+      canParticipate={canParticipate}
+      isParticipating={participateMutation.isPending}
+      onParticipate={handleParticipate}
+    />
+  );
 }
