@@ -40,9 +40,11 @@ export function LightningChatClient({
     error: queryError,
   } = useLightningChatInfinite({ lightningId });
   const isWaitingInitialResponse = isPending && !data;
+  const hasInitialPage = Boolean(data?.pages?.[0]);
 
   const { error: socketError, sendMessage } = useLightningChatSocket({
     lightningId,
+    enabled: hasInitialPage,
   });
 
   useEffect(() => {

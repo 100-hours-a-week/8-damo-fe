@@ -11,10 +11,12 @@ import { useUserStore } from "@/src/stores/user-store";
 
 interface UseLightningChatSocketOptions {
   lightningId: string;
+  enabled?: boolean;
 }
 
 export function useLightningChatSocket({
   lightningId,
+  enabled = true,
 }: UseLightningChatSocketOptions) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export function useLightningChatSocket({
     currentUserId,
   });
 
-  useChatRoomSubscription(lightningId, onMessage);
+  useChatRoomSubscription(lightningId, onMessage, enabled);
 
   useEffect(() => {
     return () => {

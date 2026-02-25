@@ -6,9 +6,12 @@
 
   export function useChatRoomSubscription(
     lightningId: string,
-    onMessage: (payload: IMessage) => void
+    onMessage: (payload: IMessage) => void,
+    enabled = true
   ) {
     useEffect(() => {
+      if (!enabled) return;
+
       socketManager.subscribe(
         `chat-room-${lightningId}`,
         `/sub/lightning/${lightningId}`,
@@ -18,5 +21,5 @@
       return () => {
         socketManager.unsubscribe(`chat-room-${lightningId}`);
       };
-    }, [lightningId, onMessage]);
+    }, [enabled, lightningId, onMessage]);
   }
