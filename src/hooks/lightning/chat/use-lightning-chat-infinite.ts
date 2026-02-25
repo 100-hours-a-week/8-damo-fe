@@ -72,7 +72,10 @@ export function useLightningChatInfinite({
 
   const query = useInfiniteQuery({
     queryKey,
-    initialPageParam: undefined as ChatPageParam | undefined,
+    initialPageParam: {
+      direction: null,
+      size: 20,
+    } as ChatPageParam | undefined,
     queryFn: async ({ pageParam }) => {
       const params: GetLightningChatMessagesParams = {
         lightningId,
