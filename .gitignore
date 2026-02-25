@@ -61,3 +61,7 @@ refactor-backlog/
 docker-compose.yml
 # Sentry Config File
 .env.sentry-build-plugin
+
+server.js
+tests/pref/results/
+server.mjs

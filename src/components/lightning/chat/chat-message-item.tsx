@@ -33,6 +33,9 @@ export function ChatMessageItem({
   const isMine = message.senderId === currentUserId;
   const timeText = formatChatTime(message.createdAt);
   const senderLabel = isMine ? "나" : `사용자 ${message.senderId}`;
+  const unreadCount = message.unreadCount ?? 0;
+  const shouldShowUnreadCount =
+    Number.isFinite(unreadCount) && unreadCount > 0;
 
   return (
     <Fragment>
@@ -55,15 +58,35 @@ export function ChatMessageItem({
             </p>
           )}
 
-          <p
+          <div
             className={
               isMine
-                ? "break-words rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-base leading-6 text-primary-foreground"
-                : "break-words rounded-2xl rounded-bl-md bg-background px-4 py-2.5 text-base leading-6 text-foreground shadow-xs"
+                ? "flex items-end justify-end gap-1.5"
+                : "flex items-end gap-1.5"
             }
           >
-            {message.content}
-          </p>
+            {isMine && shouldShowUnreadCount && (
+              <span className="mb-1 text-xs font-semibold leading-none text-primary">
+                {unreadCount}
+              </span>
+            )}
+
+            <p
+              className={
+                isMine
+                  ? "break-words rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-base leading-6 text-primary-foreground"
+                  : "break-words rounded-2xl rounded-bl-md bg-background px-4 py-2.5 text-base leading-6 text-foreground shadow-xs"
+              }
+            >
+              {message.content}
+            </p>
+
+            {!isMine && shouldShowUnreadCount && (
+              <span className="mb-1 text-xs font-semibold leading-none text-primary">
+                {unreadCount}
+              </span>
+            )}
+          </div>
 
           {timeText && (
             <p

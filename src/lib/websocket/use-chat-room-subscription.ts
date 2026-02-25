@@ -9,10 +9,14 @@
     onMessage: (payload: IMessage) => void
   ) {
     useEffect(() => {
-      socketManager.subscribe("chat-room", `/sub/lightning/${lightningId}`, onMessage);
+      socketManager.subscribe(
+        `chat-room-${lightningId}`,
+        `/sub/lightning/${lightningId}`,
+        onMessage,
+      );
 
       return () => {
-        socketManager.unsubscribe("chat-room");
+        socketManager.unsubscribe(`chat-room-${lightningId}`);
       };
     }, [lightningId, onMessage]);
   }

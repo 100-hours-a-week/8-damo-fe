@@ -1,4 +1,4 @@
-import type { QueryClient, InfiniteData } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import type { ChatInfiniteData} from "@/src/types/lightning-chat";
 import { getLightningChatMessages } from "@/src/lib/api/client/lightning";
 import { dedupeAndSortById } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";

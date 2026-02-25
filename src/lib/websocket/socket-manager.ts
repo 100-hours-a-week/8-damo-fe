@@ -148,6 +148,7 @@
         destination,
         handler,
         sub: undefined,
+        id: key,
         generation: this.generation,
       };
 
@@ -176,7 +177,7 @@
 
       if (def.sub && isSafeToUseClient(this.client)) {
         try {
-          def.sub.unsubscribe();
+          def.sub.unsubscribe({id: key});
         } catch {
         }
       }
@@ -207,7 +208,7 @@
       if (def.sub && def.generation === this.generation) return;
 
       try {
-        const sub = client.subscribe(def.destination, def.handler);
+        const sub = client.subscribe(def.destination, def.handler, {id: key});
         def.sub = sub;
         def.generation = this.generation;
         this.registry.set(key, def);

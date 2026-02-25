@@ -22,11 +22,6 @@ interface UseLightningChatInfiniteOptions {
   size?: number;
 }
 
-type ChatInfiniteData = InfiniteData<
-  ChatMessagePageResponse,
-  ChatPageParam | undefined
->;
-
 function toValidPageParam(
   param: ChatPageParam | null | undefined,
   fallbackDirection: "PREV" | "NEXT",
@@ -100,7 +95,7 @@ export function useLightningChatInfinite({
     retry: 1,
   });
 
-  const pages = query.data?.pages ?? [];
+  const pages = useMemo(() => query.data?.pages ?? [], [query.data?.pages]);
   const messages = useMemo(
     () => dedupeAndSortById(pages.flatMap((page) => page.messages)),
     [pages]

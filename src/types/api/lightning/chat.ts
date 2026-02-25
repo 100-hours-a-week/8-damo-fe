@@ -35,6 +35,7 @@ export interface ChatMessageRaw {
   chatType: ChatType;
   content: string;
   createdAt: string;
+  unreadCount: number;
 }
 
 export interface ChatPageParamRaw {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { LocationPermission } from "@/src/types/lightning";
 
 interface UseLightningLocationResult {
