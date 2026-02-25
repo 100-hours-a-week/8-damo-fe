@@ -126,17 +126,15 @@ export function useChatScrollController({
       return;
     }
 
-    const distanceToBottom =
-      scrollRoot.scrollHeight -
-      scrollRoot.scrollTop -
-      scrollRoot.clientHeight;
-
-    if (distanceToBottom <= 80) {
-      requestAnimationFrame(() => {
-        scrollRoot.scrollTop = scrollRoot.scrollHeight;
-      });
+    if (!bottomInView) {
+      prevLengthRef.current = messagesLength;
+      return;
     }
 
+    requestAnimationFrame(() => {
+      scrollRoot.scrollTop = scrollRoot.scrollHeight;
+    });
+
     prevLengthRef.current = messagesLength;
-  }, [messagesLength, scrollRoot]);
+  }, [bottomInView, messagesLength, scrollRoot]);
 }
