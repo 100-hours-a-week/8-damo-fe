@@ -26,7 +26,7 @@ interface Props {
   fetchNextPage: () => Promise<unknown>;
 }
 
-const INVIEW_MARGIN = "120px 0px 120px 0px";
+const INVIEW_MARGIN = "15% 0px 15% 0px";
 
 function isSameMessageId(
   messageId: string | number,
@@ -63,14 +63,14 @@ export function ChatMessageList({
     useInView({
       root: scrollRoot,
       rootMargin: INVIEW_MARGIN,
-      threshold: 0,
+      threshold: 0.3,
     });
 
   const { ref: bottomSentinelRef, inView: bottomInView } =
     useInView({
       root: scrollRoot,
       rootMargin: INVIEW_MARGIN,
-      threshold: 0,
+      threshold: 0.3,
     });
 
   const {
