@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatMessageRequest } from "@/src/types/chat";
 import { useChatRoomSubscription } from "@/src/lib/websocket/use-chat-room-subscription";
 import { publishChatMessage } from "@/src/lib/lightning/chat/publish-chat-message";
 import { useLightningChatMessageHandler } from "@/src/hooks/lightning/chat/use-lightning-chat-message-handler";
+import { getLightningChatMessagesQueryKey } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
 import { useUserStore } from "@/src/stores/user-store";
 
 interface UseLightningChatSocketOptions {
@@ -30,6 +31,15 @@ export function useLightningChatSocket({
   });
 
   useChatRoomSubscription(lightningId, onMessage);
+
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({
+        queryKey: getLightningChatMessagesQueryKey(lightningId),
+        exact: true,
+      });
+    };
+  }, [lightningId, queryClient]);
 
   const sendMessage = useCallback(
     (content: string) => {
