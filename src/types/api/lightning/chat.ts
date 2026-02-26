@@ -1,11 +1,11 @@
 import type { ChatBroadcastMessage, ChatType } from "@/src/types/chat";
 
-export type ChatDirection = "PREV" | "NEXT";
+export type ChatDirection = "PREV" | "NEXT" | null;
 export type ChatInitialScrollMode = "TOP" | "CENTER" | "BOTTOM" | "NONE";
 
 export interface ChatPageParam {
   direction: ChatDirection;
-  cursorId: number;
+  cursorId: string | null;
   size: number;
 }
 
@@ -40,8 +40,8 @@ export interface ChatMessageRaw {
 
 export interface ChatPageParamRaw {
   direction: ChatDirection;
-  cursorId: number | string;
-  size: number | string;
+  cursorId: string | null;
+  size: number;
 }
 
 export interface ChatReadBoundaryRaw {
@@ -64,6 +64,6 @@ export interface ChatMessagePageRaw {
 export interface GetLightningChatMessagesParams {
   lightningId: string;
   direction?: ChatDirection;
-  cursorId?: number;
+  cursorId?: string | null;
   size?: number;
 }

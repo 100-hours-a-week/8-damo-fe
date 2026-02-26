@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 
 import type {
   ChatInitialScrollMode,
@@ -19,6 +19,7 @@ export function useChatScrollController({
   fetchNextPage,
   topInView,
   bottomInView,
+  lastChatMessageId,
 }: {
   scrollRoot: HTMLDivElement | null;
   messagesLength: number;
@@ -32,11 +33,24 @@ export function useChatScrollController({
   fetchNextPage: () => Promise<unknown>;
   topInView: boolean;
   bottomInView: boolean;
+  lastChatMessageId: string | null;
 }) {
   const initialLoadDoneRef = useRef(false);
-  const prevLengthRef = useRef(0);
+  const handledChatMessageIdRef = useRef<string | null>(
+    null
+  );
   const fetchingPrevRef = useRef(false);
   const fetchingNextRef = useRef(false);
+  const [isBottomOutOfView, setIsBottomOutOfView] =
+    useState(false);
+
+  const scrollToBottom = useCallback(() => {
+    if (!scrollRoot) return;
+    scrollRoot.scrollTo({
+      top: scrollRoot.scrollHeight,
+    });
+    setIsBottomOutOfView(false);
+  }, [scrollRoot]);
 
   // 1. 초기 스크롤
   useEffect(() => {
@@ -46,10 +60,12 @@ export function useChatScrollController({
     requestAnimationFrame(() => {
       switch (initialScrollMode) {
         case "TOP":
-          scrollRoot.scrollTop = 0;
+          scrollRoot.scrollTo({ top: 0 });
           break;
         case "BOTTOM":
-          scrollRoot.scrollTop = scrollRoot.scrollHeight;
+          scrollRoot.scrollTo({
+            top: scrollRoot.scrollHeight,
+          });
           break;
         case "CENTER": {
           const anchor = scrollRoot.querySelector<HTMLElement>(
@@ -59,17 +75,24 @@ export function useChatScrollController({
           if (anchor) {
             const middle =
               anchor.offsetTop + anchor.offsetHeight / 2;
-            scrollRoot.scrollTop =
-              middle - scrollRoot.clientHeight / 2;
+            scrollRoot.scrollTo({
+              top: middle - scrollRoot.clientHeight / 2,
+            });
           }
           break;
         }
       }
 
       initialLoadDoneRef.current = true;
-      prevLengthRef.current = messagesLength;
+      setIsBottomOutOfView(!bottomInView);
     });
-  }, [scrollRoot, messagesLength, initialScrollMode, anchorCursor]);
+  }, [
+    scrollRoot,
+    messagesLength,
+    initialScrollMode,
+    anchorCursor,
+    bottomInView,
+  ]);
 
   // 2. 위쪽 로딩
   useEffect(() => {
@@ -85,7 +108,9 @@ export function useChatScrollController({
         requestAnimationFrame(() => {
           const delta =
             scrollRoot.scrollHeight - beforeHeight;
-          scrollRoot.scrollTop += delta;
+          scrollRoot.scrollTo({
+            top: scrollRoot.scrollTop + delta,
+          });
         });
       })
       .finally(() => {
@@ -116,27 +141,34 @@ export function useChatScrollController({
     fetchNextPage,
   ]);
 
-  // 4. 새 메시지 도착 시 자동 하단 이동
+  useEffect(() => {
+    if (!initialLoadDoneRef.current) return;
+    const frame = requestAnimationFrame(() => {
+      setIsBottomOutOfView(!bottomInView);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [bottomInView]);
+
+  // 4. 실시간 CHAT_MESSAGE 이벤트에서만 자동 하단 이동
   useEffect(() => {
     if (!scrollRoot || !initialLoadDoneRef.current) return;
-
-    const prevLength = prevLengthRef.current;
-    if (messagesLength <= prevLength) {
-      prevLengthRef.current = messagesLength;
+    if (!lastChatMessageId) return;
+    if (handledChatMessageIdRef.current === lastChatMessageId) {
       return;
     }
+    handledChatMessageIdRef.current = lastChatMessageId;
+    if (!bottomInView) return;
 
-    const distanceToBottom =
-      scrollRoot.scrollHeight -
-      scrollRoot.scrollTop -
-      scrollRoot.clientHeight;
-
-    if (distanceToBottom <= 80) {
-      requestAnimationFrame(() => {
-        scrollRoot.scrollTop = scrollRoot.scrollHeight;
+    requestAnimationFrame(() => {
+      scrollRoot.scrollTo({
+        top: scrollRoot.scrollHeight,
       });
-    }
+    });
+  }, [bottomInView, lastChatMessageId, scrollRoot]);
 
-    prevLengthRef.current = messagesLength;
-  }, [messagesLength, scrollRoot]);
+  return {
+    isBottomOutOfView,
+    scrollToBottom,
+  };
 }

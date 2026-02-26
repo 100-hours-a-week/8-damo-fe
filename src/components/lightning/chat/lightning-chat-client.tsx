@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLightningChatSocket } from "@/src/hooks/lightning/chat/use-lightning-chat-socket";
 import { useLightningChatInfinite } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
 import { useUserStore } from "@/src/stores/user-store";
-import { IconButton } from "@/src/components/ui/icon-button";
 import { ChatMessageList } from "./chat-message-list";
 import { ChatInput } from "./chat-input";
 import { Header } from "../../layout";
@@ -19,6 +17,8 @@ export function LightningChatClient({
   lightningId,
 }: Props) {
   const router = useRouter();
+  const [realtimeChatMessageId, setRealtimeChatMessageId] =
+    useState<string | null>(null);
   const currentUserId = useUserStore((state) => state.user?.userId ?? null);
 
   const handleBack = () => {
@@ -26,6 +26,8 @@ export function LightningChatClient({
   };
 
   const {
+    data,
+    isPending,
     messages,
     readBoundary,
     initialScrollMode,
@@ -39,9 +41,26 @@ export function LightningChatClient({
     recoverMissedMessages,
     error: queryError,
   } = useLightningChatInfinite({ lightningId });
+  const isWaitingInitialResponse = isPending && !data;
+  const hasInitialPage = Boolean(data?.pages?.[0]);
+  const initialLastReadMessageId =
+    readBoundary?.lastReadMessageId != null
+      ? String(readBoundary.lastReadMessageId)
+      : null;
+  const lastChatMessageId =
+    realtimeChatMessageId ?? initialLastReadMessageId;
 
-  const { error: socketError, sendMessage } = useLightningChatSocket({
+  const handleChatMessage = useCallback((messageId: string) => {
+    setRealtimeChatMessageId(messageId);
+  }, []);
+
+  const {
+    error: socketError,
+    sendMessage,
+  } = useLightningChatSocket({
     lightningId,
+    enabled: hasInitialPage,
+    onChatMessage: handleChatMessage,
   });
 
   useEffect(() => {
@@ -55,6 +74,26 @@ export function LightningChatClient({
 
   const errorMessage =
     socketError ?? (queryError instanceof Error ? queryError.message : null);
+
+  if (isWaitingInitialResponse) {
+    return (
+      <div className="mx-auto flex h-full w-full min-w-[320px] max-w-[430px] flex-col bg-background">
+        <Header
+          title="번개 채팅"
+          onBack={handleBack}
+        />
+
+        <section className="flex-1 bg-card px-4 py-4">
+          <div className="space-y-3">
+            <div className="h-4 w-24 animate-pulse rounded bg-[#f1e7dc]" />
+            <div className="h-10 w-3/4 animate-pulse rounded-2xl bg-[#f1e7dc]" />
+            <div className="h-10 w-1/2 animate-pulse rounded-2xl bg-[#f1e7dc]" />
+            <div className="h-10 w-4/5 animate-pulse rounded-2xl bg-[#f1e7dc]" />
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex h-full w-full min-w-[320px] max-w-[430px] flex-col bg-background">
@@ -75,6 +114,7 @@ export function LightningChatClient({
         isFetchingNextPage={isFetchingNextPage}
         fetchPreviousPage={fetchPreviousPage}
         fetchNextPage={fetchNextPage}
+        lastChatMessageId={lastChatMessageId}
       />
 
       {errorMessage && (

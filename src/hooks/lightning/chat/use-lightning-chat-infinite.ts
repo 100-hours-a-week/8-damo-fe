@@ -29,8 +29,7 @@ function toValidPageParam(
 ): ChatPageParam | undefined {
   if (!param) return undefined;
 
-  const cursorId = Number(param.cursorId);
-  if (!Number.isFinite(cursorId) || cursorId <= 0) return undefined;
+  const cursorId = param.cursorId;
 
   const direction =
     param.direction === "PREV" || param.direction === "NEXT"
@@ -72,7 +71,10 @@ export function useLightningChatInfinite({
 
   const query = useInfiniteQuery({
     queryKey,
-    initialPageParam: undefined as ChatPageParam | undefined,
+    initialPageParam: {
+      direction: null,
+      size: 20,
+    } as ChatPageParam | undefined,
     queryFn: async ({ pageParam }) => {
       const params: GetLightningChatMessagesParams = {
         lightningId,
@@ -107,11 +109,11 @@ export function useLightningChatInfinite({
   const readBoundary = initialPage?.readBoundary ?? null;
 
   const maxMessageId = useMemo(() => {
-    if (messages.length === 0) return 0;
+    if (messages.length === 0) return "0";
     return messages.reduce((max, message) => {
-      const current = Number(message.messageId);
-      return current > max ? current : max;
-    }, 0);
+      const current = message.messageId;
+      return Number(current) > Number(max) ? current : max;
+    }, "0");
   }, [messages]);
   const recoverMissedMessages = useCallback(async () => {
     await recoverMissedMessagesFromServer(

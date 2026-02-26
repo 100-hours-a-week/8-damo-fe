@@ -7,11 +7,9 @@ export async function recoverMissedMessagesFromServer(
   queryClient: QueryClient,
   queryKey: readonly unknown[],
   lightningId: string,
-  maxMessageId: number,
+  maxMessageId: string,
   size: number
 ) {
-  if (maxMessageId <= 0) return;
-
   const recoveredResponse = await getLightningChatMessages({
     lightningId,
     direction: "NEXT",

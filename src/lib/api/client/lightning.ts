@@ -46,7 +46,7 @@ function mapChatPageParam(
 
   return {
     direction: param.direction,
-    cursorId: Number(param.cursorId),
+    cursorId: param.cursorId,
     size: Number(param.size),
   };
 }
