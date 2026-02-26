@@ -9,12 +9,6 @@ interface ConnectDiningRecommendationStreamParams {
   onError?: (message: string) => void;
 }
 
-interface DonePayload {
-  done?: boolean;
-  status?: string;
-  type?: string;
-}
-
 function parseJson<T>(value: string): T | null {
   try {
     return JSON.parse(value) as T;
@@ -48,17 +42,6 @@ function toRecommendationStreamMessage(
   };
 }
 
-function isDonePayload(value: unknown): boolean {
-  if (!value || typeof value !== "object") return false;
-
-  const payload = value as DonePayload;
-  if (payload.done === true) return true;
-
-  const status = payload.status?.toUpperCase();
-  const type = payload.type?.toUpperCase();
-  return status === "DONE" || type === "DONE";
-}
-
 function toRecommendationStreamPath(params: {
   groupId: string;
   diningId: string;
@@ -84,16 +67,8 @@ export function connectDiningRecommendationStream({
   };
 
   source.onmessage = (event) => {
-    const parsed = parseJson<RecommendationStreamMessage | DonePayload>(
-      event.data
-    );
-
+    const parsed = parseJson<RecommendationStreamMessage>(event.data);
     if (!parsed) return;
-    if (isDonePayload(parsed)) {
-      onDone?.();
-      return;
-    }
-
     const message = toRecommendationStreamMessage(parsed);
     if (!message) return;
     onMessage?.(message);
