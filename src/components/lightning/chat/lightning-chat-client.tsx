@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLightningChatSocket } from "@/src/hooks/lightning/chat/use-lightning-chat-socket";
 import { useLightningChatInfinite } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
@@ -17,6 +17,8 @@ export function LightningChatClient({
   lightningId,
 }: Props) {
   const router = useRouter();
+  const [realtimeChatMessageId, setRealtimeChatMessageId] =
+    useState<string | null>(null);
   const currentUserId = useUserStore((state) => state.user?.userId ?? null);
 
   const handleBack = () => {
@@ -41,14 +43,24 @@ export function LightningChatClient({
   } = useLightningChatInfinite({ lightningId });
   const isWaitingInitialResponse = isPending && !data;
   const hasInitialPage = Boolean(data?.pages?.[0]);
+  const initialLastReadMessageId =
+    readBoundary?.lastReadMessageId != null
+      ? String(readBoundary.lastReadMessageId)
+      : null;
+  const lastChatMessageId =
+    realtimeChatMessageId ?? initialLastReadMessageId;
+
+  const handleChatMessage = useCallback((messageId: string) => {
+    setRealtimeChatMessageId(messageId);
+  }, []);
 
   const {
     error: socketError,
     sendMessage,
-    lastChatMessageId,
   } = useLightningChatSocket({
     lightningId,
     enabled: hasInitialPage,
+    onChatMessage: handleChatMessage,
   });
 
   useEffect(() => {

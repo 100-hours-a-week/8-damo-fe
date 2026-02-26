@@ -77,10 +77,7 @@ export function ChatMessageList({
       threshold: 0.3,
     });
 
-  const {
-    isBottomOutOfView,
-    scrollToBottom,
-  } = useChatScrollController({
+  const { scrollToBottom } = useChatScrollController({
     scrollRoot,
     messagesLength: messages.length,
     initialScrollMode,
