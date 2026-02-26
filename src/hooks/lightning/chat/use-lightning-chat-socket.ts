@@ -20,16 +20,23 @@ export function useLightningChatSocket({
 }: UseLightningChatSocketOptions) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  const [lastChatMessageId, setLastChatMessageId] =
+    useState<string | null>(null);
   const currentUserId = useUserStore((state) => {
     const value = Number(state.user?.userId);
     return Number.isFinite(value) ? value : null;
   });
+
+  const handleChatMessage = useCallback((messageId: string) => {
+    setLastChatMessageId(messageId);
+  }, []);
 
   const onMessage = useLightningChatMessageHandler({
     lightningId,
     queryClient,
     setError,
     currentUserId,
+    onChatMessage: handleChatMessage,
   });
 
   useChatRoomSubscription(lightningId, onMessage, enabled);
@@ -63,5 +70,5 @@ export function useLightningChatSocket({
     [lightningId]
   );
 
-  return { error, sendMessage };
+  return { error, sendMessage, lastChatMessageId };
 }

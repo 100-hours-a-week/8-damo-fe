@@ -19,6 +19,7 @@ export function useChatScrollController({
   fetchNextPage,
   topInView,
   bottomInView,
+  lastChatMessageId,
 }: {
   scrollRoot: HTMLDivElement | null;
   messagesLength: number;
@@ -32,9 +33,12 @@ export function useChatScrollController({
   fetchNextPage: () => Promise<unknown>;
   topInView: boolean;
   bottomInView: boolean;
+  lastChatMessageId: string | null;
 }) {
   const initialLoadDoneRef = useRef(false);
-  const prevLengthRef = useRef(0);
+  const handledChatMessageIdRef = useRef<string | null>(
+    null
+  );
   const fetchingPrevRef = useRef(false);
   const fetchingNextRef = useRef(false);
   const [isBottomOutOfView, setIsBottomOutOfView] =
@@ -42,7 +46,9 @@ export function useChatScrollController({
 
   const scrollToBottom = useCallback(() => {
     if (!scrollRoot) return;
-    scrollRoot.scrollTop = scrollRoot.scrollHeight;
+    scrollRoot.scrollTo({
+      top: scrollRoot.scrollHeight,
+    });
     setIsBottomOutOfView(false);
   }, [scrollRoot]);
 
@@ -54,10 +60,12 @@ export function useChatScrollController({
     requestAnimationFrame(() => {
       switch (initialScrollMode) {
         case "TOP":
-          scrollRoot.scrollTop = 0;
+          scrollRoot.scrollTo({ top: 0 });
           break;
         case "BOTTOM":
-          scrollRoot.scrollTop = scrollRoot.scrollHeight;
+          scrollRoot.scrollTo({
+            top: scrollRoot.scrollHeight,
+          });
           break;
         case "CENTER": {
           const anchor = scrollRoot.querySelector<HTMLElement>(
@@ -67,15 +75,15 @@ export function useChatScrollController({
           if (anchor) {
             const middle =
               anchor.offsetTop + anchor.offsetHeight / 2;
-            scrollRoot.scrollTop =
-              middle - scrollRoot.clientHeight / 2;
+            scrollRoot.scrollTo({
+              top: middle - scrollRoot.clientHeight / 2,
+            });
           }
           break;
         }
       }
 
       initialLoadDoneRef.current = true;
-      prevLengthRef.current = messagesLength;
       setIsBottomOutOfView(!bottomInView);
     });
   }, [
@@ -100,7 +108,9 @@ export function useChatScrollController({
         requestAnimationFrame(() => {
           const delta =
             scrollRoot.scrollHeight - beforeHeight;
-          scrollRoot.scrollTop += delta;
+          scrollRoot.scrollTo({
+            top: scrollRoot.scrollTop + delta,
+          });
         });
       })
       .finally(() => {
@@ -133,30 +143,29 @@ export function useChatScrollController({
 
   useEffect(() => {
     if (!initialLoadDoneRef.current) return;
-    setIsBottomOutOfView(!bottomInView);
-  }, [bottomInView]);
-
-  // 4. 새 메시지 도착 시 자동 하단 이동
-  useEffect(() => {
-    if (!scrollRoot || !initialLoadDoneRef.current) return;
-
-    const prevLength = prevLengthRef.current;
-    if (messagesLength <= prevLength) {
-      prevLengthRef.current = messagesLength;
-      return;
-    }
-
-    if (!bottomInView) {
-      prevLengthRef.current = messagesLength;
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      scrollRoot.scrollTop = scrollRoot.scrollHeight;
+    const frame = requestAnimationFrame(() => {
+      setIsBottomOutOfView(!bottomInView);
     });
 
-    prevLengthRef.current = messagesLength;
-  }, [bottomInView, messagesLength, scrollRoot]);
+    return () => cancelAnimationFrame(frame);
+  }, [bottomInView]);
+
+  // 4. 실시간 CHAT_MESSAGE 이벤트에서만 자동 하단 이동
+  useEffect(() => {
+    if (!scrollRoot || !initialLoadDoneRef.current) return;
+    if (!lastChatMessageId) return;
+    if (handledChatMessageIdRef.current === lastChatMessageId) {
+      return;
+    }
+    handledChatMessageIdRef.current = lastChatMessageId;
+    if (!bottomInView) return;
+
+    requestAnimationFrame(() => {
+      scrollRoot.scrollTo({
+        top: scrollRoot.scrollHeight,
+      });
+    });
+  }, [bottomInView, lastChatMessageId, scrollRoot]);
 
   return {
     isBottomOutOfView,

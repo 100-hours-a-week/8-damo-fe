@@ -42,7 +42,11 @@ export function LightningChatClient({
   const isWaitingInitialResponse = isPending && !data;
   const hasInitialPage = Boolean(data?.pages?.[0]);
 
-  const { error: socketError, sendMessage } = useLightningChatSocket({
+  const {
+    error: socketError,
+    sendMessage,
+    lastChatMessageId,
+  } = useLightningChatSocket({
     lightningId,
     enabled: hasInitialPage,
   });
@@ -98,6 +102,7 @@ export function LightningChatClient({
         isFetchingNextPage={isFetchingNextPage}
         fetchPreviousPage={fetchPreviousPage}
         fetchNextPage={fetchNextPage}
+        lastChatMessageId={lastChatMessageId}
       />
 
       {errorMessage && (

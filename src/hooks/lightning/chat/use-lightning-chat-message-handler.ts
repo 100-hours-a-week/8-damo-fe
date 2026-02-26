@@ -17,6 +17,7 @@ interface UseLightningChatMessageHandlerOptions {
   queryClient: QueryClient;
   setError: Dispatch<SetStateAction<string | null>>;
   currentUserId: number | null;
+  onChatMessage?: (messageId: string) => void;
 }
 
 function normalizeSocketMessage(
@@ -44,6 +45,7 @@ export function useLightningChatMessageHandler({
   queryClient,
   setError,
   currentUserId,
+  onChatMessage,
 }: UseLightningChatMessageHandlerOptions) {
   return useCallback(
     (payload: IMessage) => {
@@ -54,6 +56,7 @@ export function useLightningChatMessageHandler({
             const incoming = normalizeSocketMessage(parsed.payload, lightningId);
             console.log("[WS][CHAT_MESSAGE]", { incoming, });
             appendChatMessageToCache(queryClient, lightningId, incoming);
+            onChatMessage?.(incoming.messageId);
             setError(null);
             return;
           }
@@ -81,6 +84,6 @@ export function useLightningChatMessageHandler({
         setError("메시지를 읽지 못했습니다.");
       }
     },
-    [currentUserId, lightningId, queryClient, setError]
+    [currentUserId, lightningId, onChatMessage, queryClient, setError]
   );
 }

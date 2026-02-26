@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import type { ChatBroadcastMessage } from "@/src/types/chat";
 import type {
@@ -24,6 +24,7 @@ interface Props {
   isFetchingNextPage: boolean;
   fetchPreviousPage: () => Promise<unknown>;
   fetchNextPage: () => Promise<unknown>;
+  lastChatMessageId: string | null;
 }
 
 const INVIEW_MARGIN = "15% 0px 15% 0px";
@@ -48,9 +49,12 @@ export function ChatMessageList({
   isFetchingNextPage,
   fetchPreviousPage,
   fetchNextPage,
+  lastChatMessageId,
 }: Props) {
   const [scrollRoot, setScrollRoot] =
     useState<HTMLDivElement | null>(null);
+  const [hasPendingIncomingMessage, setHasPendingIncomingMessage] = useState(false);
+  const observedChatMessageIdRef = useRef<string | null>(null);
 
   const setScrollRootRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -89,7 +93,39 @@ export function ChatMessageList({
     fetchNextPage,
     topInView,
     bottomInView,
+    lastChatMessageId,
   });
+
+  useEffect(() => {
+    if (!lastChatMessageId) return;
+
+    if (observedChatMessageIdRef.current === null) {
+      observedChatMessageIdRef.current = lastChatMessageId;
+      return;
+    }
+
+    if (observedChatMessageIdRef.current === lastChatMessageId) return;
+    observedChatMessageIdRef.current = lastChatMessageId;
+
+    if (bottomInView) return;
+
+    const frame = requestAnimationFrame(() => {
+      setHasPendingIncomingMessage(true);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [bottomInView, lastChatMessageId]);
+
+  useEffect(() => {
+    if (!bottomInView) return;
+    if (!hasPendingIncomingMessage) return;
+
+    const frame = requestAnimationFrame(() => {
+      setHasPendingIncomingMessage(false);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [bottomInView, hasPendingIncomingMessage]);
 
   const showDivider = readBoundary?.showDivider === true;
   const loadedMessageIds = new Set(
@@ -161,16 +197,23 @@ export function ChatMessageList({
         <div ref={bottomSentinelRef} className="h-px w-full" />
       </section>
 
-      {isBottomOutOfView && messages.length > 0 && (
+      {hasPendingIncomingMessage && messages.length > 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-end px-4">
           <Button
             type="button"
             onClick={scrollToBottom}
-            size="sm"
-            className="pointer-events-auto h-9 rounded-full px-3 text-xs font-semibold"
+            className="
+              pointer-events-auto
+              h-9 w-9
+              rounded-full
+              border border-border/70
+              bg-background/85
+              shadow-sm
+              backdrop-blur
+              flex items-center justify-center
+            "
           >
-            <ArrowDown className="mr-1 size-4" />
-            아래로 이동
+            <ArrowDown className="size-4 text-primary" />
           </Button>
         </div>
       )}
