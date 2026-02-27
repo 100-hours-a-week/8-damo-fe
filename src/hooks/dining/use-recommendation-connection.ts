@@ -9,9 +9,6 @@ import type {
   RecommendationStreamStatus,
 } from "@/src/types/api/dining";
 
-const WATCHDOG_TIMEOUT_MS = 15_000;
-const WATCHDOG_CHECK_INTERVAL_MS = 3_000;
-
 interface UseRecommendationConnectionParams {
   groupId: string;
   diningId: string;
@@ -55,19 +52,7 @@ export function useRecommendationConnection({
 
     let alive = true;
     let done = false;
-    let watchdogTimer: ReturnType<typeof setInterval> | null = null;
-    let lastActivityAt = 0;
     let closeStream: (() => void) | null = null;
-
-    const clearWatchdogTimer = () => {
-      if (!watchdogTimer) return;
-      clearInterval(watchdogTimer);
-      watchdogTimer = null;
-    };
-
-    const markActivity = () => {
-      lastActivityAt = Date.now();
-    };
 
     const stopStream = () => {
       if (!closeStream) return;
@@ -75,48 +60,22 @@ export function useRecommendationConnection({
       closeStream = null;
     };
 
-    const startWatchdog = () => {
-      clearWatchdogTimer();
-      watchdogTimer = setInterval(() => {
-        if (!alive || done) return;
-        if (lastActivityAt === 0) return;
-        if (Date.now() - lastActivityAt < WATCHDOG_TIMEOUT_MS) return;
-
-        done = true;
-        dispatch({ type: "ERROR" });
-        setErrorMessage("스트림 응답이 지연되어 연결을 종료했습니다.");
-        clearWatchdogTimer();
-        stopStream();
-      }, WATCHDOG_CHECK_INTERVAL_MS);
-    };
-
     const start = () => {
       if (!alive || done) return;
 
       dispatch({ type: "CONNECT" });
       stopStream();
-      markActivity();
-      startWatchdog();
 
       closeStream = connectDiningRecommendationStream({
         groupId,
         diningId,
         onOpen: () => {
           if (!alive || done) return;
-
           setErrorMessage(null);
-          markActivity();
-          startWatchdog();
           dispatch({ type: "OPEN" });
-        },
-        onHeartbeat: () => {
-          if (!alive || done) return;
-          markActivity();
         },
         onMessage: (message) => {
           if (!alive || done) return;
-
-          markActivity();
           stableOnMessage(message);
           dispatch({ type: "MESSAGE" });
         },
@@ -124,19 +83,14 @@ export function useRecommendationConnection({
           if (!alive || done) return;
 
           done = true;
-          clearWatchdogTimer();
-          stopStream();
           dispatch({ type: "CLOSE" });
           stableOnDone();
         },
         onError: (message) => {
           if (!alive || done) return;
 
-          done = true;
           dispatch({ type: "ERROR" });
           setErrorMessage(message);
-          clearWatchdogTimer();
-          stopStream();
         },
       });
     };
@@ -146,7 +100,6 @@ export function useRecommendationConnection({
     return () => {
       alive = false;
       done = true;
-      clearWatchdogTimer();
       stopStream();
       dispatch({ type: "CLOSE" });
     };
