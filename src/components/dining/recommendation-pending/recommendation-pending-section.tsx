@@ -1,39 +1,173 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-import { Button } from "@/src/components/ui/button";
 import { useDiningRecommendationStream } from "@/src/hooks/dining/use-dining-recommendation-stream";
-import { useTypewriter } from "@/src/hooks/use-typewriter";
-import { RecommendationPendingMessage } from "./recommendation-pending-message";
+import type { RecommendationStreamStatus } from "@/src/types/api/dining";
+import { RecommendationPendingView } from "./recommendation-pending-view";
+import type { RecommendationPendingViewState } from "./recommendation-pending-view.types";
 
 interface RecommendationPendingSectionProps {
   groupId: string;
   diningId: string;
 }
 
-const NICKNAME_COLORS = [
-  "#ff8d28",
-  "#007aff",
-  "#34c759",
-  "#ff375f",
-  "#af52de",
-  "#ff9500",
-];
-
-interface RecommendationPendingTypingContentProps {
-  content: string;
+interface RecommendationPendingViewStateInput {
+  streamStatus: RecommendationStreamStatus;
+  messages: ReturnType<typeof useDiningRecommendationStream>["messages"];
+  errorMessage: string | null;
+  retryCount: number;
+  isExpired: boolean;
 }
 
-function RecommendationPendingTypingContent({
-  content,
-}: RecommendationPendingTypingContentProps) {
-  const typedContent = useTypewriter(content, { intervalMs: 18 });
+type RecommendationUiStage =
+  | "initializing"
+  | "collecting"
+  | "reconnecting"
+  | "failed"
+  | "completed";
 
-  return (
-    <p className="mt-1 text-[13px] leading-5 text-[#3a3a3c]">
-      {typedContent}
-    </p>
-  );
+interface NormalizedRecommendationState {
+  stage: RecommendationUiStage;
+  normalizedStatus: RecommendationStreamStatus;
+  normalizedErrorMessage: string | null;
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled stream status: ${String(value)}`);
+}
+
+function dedupeMessages(
+  messages: RecommendationPendingViewStateInput["messages"]
+): RecommendationPendingViewStateInput["messages"] {
+  const seenIds = new Set<string>();
+
+  return messages.filter((message) => {
+    if (seenIds.has(message.eventId)) return false;
+    seenIds.add(message.eventId);
+    return true;
+  });
+}
+
+function normalizeRecommendationState({
+  streamStatus,
+  messages,
+  errorMessage,
+  isExpired,
+}: RecommendationPendingViewStateInput): NormalizedRecommendationState {
+  const hasMessages = messages.length > 0;
+  const hasError = Boolean(errorMessage);
+
+  if (streamStatus === "error" || isExpired) {
+    return {
+      stage: "failed",
+      normalizedStatus: "error",
+      normalizedErrorMessage: errorMessage,
+    };
+  }
+
+  if (streamStatus === "streaming") {
+    return {
+      stage: "collecting",
+      normalizedStatus: "streaming",
+      normalizedErrorMessage: null,
+    };
+  }
+
+  if (streamStatus === "disconnected") {
+    if (hasMessages && !hasError) {
+      return {
+        stage: "completed",
+        normalizedStatus: "streaming",
+        normalizedErrorMessage: null,
+      };
+    }
+
+    return {
+      stage: "reconnecting",
+      normalizedStatus: "connecting",
+      normalizedErrorMessage: null,
+    };
+  }
+
+  if (streamStatus === "connected" && hasMessages) {
+    return {
+      stage: "collecting",
+      normalizedStatus: "streaming",
+      normalizedErrorMessage: null,
+    };
+  }
+
+  switch (streamStatus) {
+    case "idle":
+    case "connecting":
+    case "connected":
+      return {
+        stage: "initializing",
+        normalizedStatus: streamStatus,
+        normalizedErrorMessage: null,
+      };
+
+    default:
+      return assertNever(streamStatus);
+  }
+}
+
+function toRecommendationPendingViewState({
+  streamStatus,
+  messages,
+  errorMessage,
+  retryCount,
+  isExpired,
+}: RecommendationPendingViewStateInput): RecommendationPendingViewState {
+  const dedupedMessages = dedupeMessages(messages);
+  const {
+    stage,
+    normalizedStatus,
+    normalizedErrorMessage,
+  } = normalizeRecommendationState({
+    streamStatus,
+    messages: dedupedMessages,
+    errorMessage,
+    retryCount,
+    isExpired,
+  });
+
+  const normalizedRetryCount =
+    stage === "reconnecting" || stage === "failed"
+      ? Math.max(retryCount, 1)
+      : retryCount;
+
+  const stateBase = {
+    retryCount: normalizedRetryCount,
+    isExpired,
+  };
+
+  switch (normalizedStatus) {
+    case "idle":
+    case "connecting":
+    case "connected":
+    case "disconnected":
+      return {
+        type: normalizedStatus,
+        ...stateBase,
+      };
+
+    case "streaming":
+      return {
+        type: "streaming",
+        messages: dedupedMessages,
+        ...stateBase,
+      };
+
+    case "error":
+      return {
+        type: "error",
+        errorMessage: normalizedErrorMessage,
+        ...stateBase,
+      };
+
+    default:
+      return assertNever(normalizedStatus);
+  }
 }
 
 export function RecommendationPendingSection({
@@ -53,67 +187,18 @@ export function RecommendationPendingSection({
     enabled: Boolean(groupId && diningId),
   });
 
-  const showSpinner = streamStatus === "connecting";
-
-  const description = isExpired
-    ? "추천이 예상보다 오래 걸리고 있습니다. 잠시 후 다시 시도해주세요."
-    : errorMessage
-      ? errorMessage
-      : "조금만 기다려주세요! 금방 추천드릴게요 ✨";
-
-  const isRetryAvailable = streamStatus === "error" && retryCount >= 3;
-
-  const getNicknameColor = (nickname: string): string => {
-    const hashValue = nickname
-      .split("")
-      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return NICKNAME_COLORS[hashValue % NICKNAME_COLORS.length];
-  };
+  const viewState = toRecommendationPendingViewState({
+    streamStatus,
+    messages,
+    errorMessage,
+    retryCount,
+    isExpired,
+  });
 
   return (
-    <section className="w-full min-h-[112px] rounded-[20px] bg-white p-4 sm:min-h-[120px] sm:p-5">
-      <div className="flex items-center justify-between gap-4">
-        <RecommendationPendingMessage description={description} />
-        {showSpinner ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="size-5 animate-spin text-[#ff8d28]" />
-          </div>
-        ) : null}
-      </div>
-
-      {messages.length > 0 ? (
-        <ul className="mt-3 flex flex-col gap-2">
-          {messages.map((message) => (
-            <li
-              key={message.eventId}
-              className="rounded-xl bg-[#f8f8fb] px-3 py-2"
-            >
-              <p
-                className="text-[12px] font-semibold leading-4"
-                style={{ color: getNicknameColor(message.nickname) }}
-              >
-                {message.nickname}
-              </p>
-              <RecommendationPendingTypingContent
-                content={message.content}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {isRetryAvailable ? (
-        <div className="mt-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-9 w-full rounded-xl text-[13px] font-medium"
-            onClick={reconnect}
-          >
-            연결 다시 시도
-          </Button>
-        </div>
-      ) : null}
-    </section>
+    <RecommendationPendingView
+      viewState={viewState}
+      onReconnect={reconnect}
+    />
   );
 }
