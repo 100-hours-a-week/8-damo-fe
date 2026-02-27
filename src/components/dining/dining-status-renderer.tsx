@@ -45,7 +45,12 @@ export function DiningStatusRenderer({
       );
 
     case "RECOMMENDATION_PENDING":
-      return <RecommendationPendingSection />;
+      return (
+        <RecommendationPendingSection
+          groupId={groupId}
+          diningId={diningId}
+        />
+      );
 
     default:
       return null;
