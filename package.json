@@ -11,11 +11,13 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@firebase/app": "^0.14.8",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-switch": "^1.2.6",
     "@sentry/nextjs": "^10",
     "@stomp/stompjs": "^7.3.0",
     "@tanstack/react-query": "^5.90.20",
@@ -24,6 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "firebase": "^12.9.0",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.562.0",
     "next": "16.0.10",
