@@ -6,9 +6,7 @@ export interface RecommendationStreamMessage {
   createdAt: string;
 }
 
-export interface RecommendationHistoryResponse {
-  messages: RecommendationStreamMessage[];
-}
+export type RecommendationHistoryResponse = RecommendationStreamMessage[];
 
 export type RecommendationStreamStatus =
   | "idle"

@@ -28,7 +28,13 @@ export function useDiningRecommendationStream({
 }: UseDiningRecommendationStreamParams): UseDiningRecommendationStreamResult {
   const queryClient = useQueryClient();
 
-  const { messages, appendMessage } = useStreamMessages();
+  const { messages, appendMessage } = useStreamMessages({
+    groupId,
+    diningId,
+    enabled,
+  });
+
+  console.log(messages);
 
   const syncDiningQueries = useCallback(async () => {
     await Promise.all([
