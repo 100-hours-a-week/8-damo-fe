@@ -1,6 +1,13 @@
 'use client'
 
-import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging'
+import {
+  deleteToken,
+  getMessaging,
+  getToken,
+  onMessage,
+  type MessagePayload,
+  type Messaging,
+} from 'firebase/messaging'
 import { firebaseApp } from './firebase'
 
 let messaging: Messaging | null = null
@@ -124,17 +131,18 @@ export const requestForToken = async (): Promise<string | null> => {
   }
 }
 
-// 포그라운드 메시지 수신 리스너
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    const messagingInstance = initMessaging()
-    if (!messagingInstance) {
-      resolve(null)
-      return
-    }
 
-    onMessage(messagingInstance, (payload) => {
-      console.log('포그라운드 메시지 수신:', payload)
-      resolve(payload)
-    })
+// 포그라운드 메시지 수신 리스너
+export const onMessageListener = (
+  onMessageReceived?: (payload: MessagePayload) => void
+): (() => void) => {
+  const messagingInstance = initMessaging()
+  if (!messagingInstance) {
+    return () => undefined
+  }
+
+  return onMessage(messagingInstance, (payload) => {
+    console.log('포그라운드 메시지 수신:', payload)
+    onMessageReceived?.(payload)
   })
+}
