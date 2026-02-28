@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useUserStore } from "@/src/stores/user-store";
 import {
   ProfileCard,
@@ -7,10 +8,13 @@ import {
   ProfileCardError,
   MenuItem,
 } from "@/src/components/mypage";
+import { Switch } from "@/src/components/ui/switch";
 import { BottomNavigationBar } from "@/src/components/layout";
 
 export default function MyPage() {
   const { user, isLoading } = useUserStore();
+  const [isPushNotificationEnabled, setIsPushNotificationEnabled] =
+    useState(false);
 
   return (
     <>
@@ -35,7 +39,14 @@ export default function MyPage() {
         <div className="h-2 bg-muted" />
 
         <nav className="flex flex-col">
-          <MenuItem href="#" label="푸시 알림" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-5">
+            <span className="text-xl font-bold text-foreground">푸시 알림</span>
+            <Switch
+              checked={isPushNotificationEnabled}
+              onCheckedChange={setIsPushNotificationEnabled}
+              aria-label="푸시 알림 토글"
+            />
+          </div>
           <MenuItem href="#" label="회원 탈퇴" />
           <MenuItem href="#" label="리뷰 관리" />
         </nav>
