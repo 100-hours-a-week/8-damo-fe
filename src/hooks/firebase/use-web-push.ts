@@ -1,45 +1,141 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { onMessageListener, requestForToken, requestNotificationPermission } from '@/src/lib/firebase/firebase-messaging'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from '@/src/components/ui/sonner'
+import {
+  deletePushToken,
+  onMessageListener,
+  requestForToken,
+  requestNotificationPermission,
+} from '@/src/lib/firebase/firebase-messaging'
+import { useWebPushStore } from '@/src/stores/web-push-store'
 
-export const useWebPush = () => {
+export interface WebPushState {
+  token: string | null
+  permission: NotificationPermission
+  loading: boolean
+  isEnabled: boolean
+  isHydrated: boolean
+  enablePush: () => Promise<string | null>
+  disablePush: () => Promise<void>
+}
+
+export const useWebPush = (): WebPushState => {
   const [token, setToken] = useState<string | null>(null)
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const [loading, setLoading] = useState(false)
+  const hasHydratedOnce = useRef(false)
+  const { isEnabled: enabledState, hydrate, setEnabled } = useWebPushStore()
+  const isHydrated = enabledState !== null
+  const isEnabled = enabledState === true
 
-  const requestToken = useCallback(async () => {
-    setLoading(true)
-
-    const permissionResult = await requestNotificationPermission()
-    setPermission(permissionResult)
-
-    if (permissionResult !== 'granted') {
-      console.warn('알림 권한이 허용되지 않았습니다.')
-      setLoading(false)
-      return null
-    }
-
+  const issueToken = useCallback(async () => {
     const issuedToken = await requestForToken()
     setToken(issuedToken)
-    setLoading(false)
     return issuedToken
   }, [])
 
-  useEffect(() => {
-    if (token) {
-      onMessageListener().then((payload) => {
-        if (payload) {
-          console.log('포그라운드 메시지 수신:', payload)
-        }
-      })
+  const syncPermission = useCallback(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setPermission('denied')
+      return 'denied' as NotificationPermission
     }
-  }, [token])
+
+    const currentPermission = Notification.permission
+    setPermission(currentPermission)
+    return currentPermission
+  }, [])
+
+  const enablePush = useCallback(async () => {
+    setLoading(true)
+    try {
+      const permissionResult = await requestNotificationPermission()
+      setPermission(permissionResult)
+
+      if (permissionResult !== 'granted') {
+        setEnabled(false)
+        setToken(null)
+        return null
+      }
+
+      const issuedToken = await issueToken()
+      if (!issuedToken) {
+        setEnabled(false)
+        setToken(null)
+        return null
+      }
+
+      setEnabled(true)
+      return issuedToken
+    } finally {
+      setLoading(false)
+    }
+  }, [issueToken, setEnabled])
+
+  const disablePush = useCallback(async () => {
+    setLoading(true)
+    try {
+      setEnabled(false)
+      await deletePushToken()
+      setToken(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [setEnabled])
+
+  useEffect(() => {
+    if (!isHydrated) {
+      hydrate()
+    }
+  }, [hydrate, isHydrated])
+
+  useEffect(() => {
+    if (!isHydrated || hasHydratedOnce.current) {
+      return
+    }
+
+    hasHydratedOnce.current = true
+    const currentPermission = syncPermission()
+
+    if (!isEnabled) {
+      setToken(null)
+      return
+    }
+
+    if (currentPermission !== 'granted') {
+      setEnabled(false)
+      setToken(null)
+      return
+    }
+
+    void issueToken().then((issuedToken) => {
+      if (!issuedToken) {
+        setEnabled(false)
+      }
+    })
+  }, [isEnabled, isHydrated, issueToken, setEnabled, syncPermission])
+
+  useEffect(() => {
+    if (!isHydrated || !isEnabled || permission !== 'granted') {
+      return
+    }
+
+    const unsubscribe = onMessageListener((payload) => {
+      const title = payload.notification?.title ?? '새 알림'
+      const description = payload.notification?.body ?? ''
+      toast.info(title, { description })
+    })
+
+    return unsubscribe
+  }, [isEnabled, isHydrated, permission])
 
   return {
     token,
     permission,
     loading,
-    refreshToken: requestToken,
+    isEnabled,
+    isHydrated,
+    enablePush,
+    disablePush,
   }
 }

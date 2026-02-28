@@ -1,14 +1,25 @@
 'use client'
 
-import { type ReactNode } from 'react'
-import { useWebPush } from '@/src/hooks/firebase/use-web-push'
+import { createContext, type ReactNode, useContext } from 'react'
+import { type WebPushState, useWebPush } from '@/src/hooks/firebase/use-web-push'
 
 interface WebPushProviderProps {
   children: ReactNode
 }
 
-export function WebPushProvider({ children }: WebPushProviderProps) {
-  useWebPush()
+const WebPushContext = createContext<WebPushState | null>(null)
 
-  return <>{children}</>
+export function WebPushProvider({ children }: WebPushProviderProps) {
+  const webPush = useWebPush()
+
+  return <WebPushContext.Provider value={webPush}>{children}</WebPushContext.Provider>
+}
+
+export function useWebPushContext() {
+  const context = useContext(WebPushContext)
+  if (!context) {
+    throw new Error('useWebPushContext must be used within WebPushProvider')
+  }
+
+  return context
 }
