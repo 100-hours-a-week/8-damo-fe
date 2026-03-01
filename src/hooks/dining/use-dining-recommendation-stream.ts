@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRecommendationConnection } from "./use-recommendation-connection";
-import { useStreamMessages } from "./use-stream-messages";
+import { useInitialMessages, mergeMessages, appendMessage as appendMessageUtil } from "./use-stream-messages";
 import type {
   RecommendationStreamMessage,
   RecommendationStreamStatus,
@@ -27,12 +27,19 @@ export function useDiningRecommendationStream({
   enabled,
 }: UseDiningRecommendationStreamParams): UseDiningRecommendationStreamResult {
   const queryClient = useQueryClient();
+  const initialMessages = useInitialMessages({ groupId, diningId, enabled });
+  const [streamMessages, setStreamMessages] = useState<RecommendationStreamMessage[]>([]);
 
-  const { messages, appendMessage } = useStreamMessages({
-    groupId,
-    diningId,
-    enabled,
-  });
+  const messages = useMemo(
+    () => mergeMessages(initialMessages, streamMessages),
+    [initialMessages, streamMessages]
+  );
+
+  const handleMessage = useCallback((message: RecommendationStreamMessage) => {
+    setStreamMessages((prev) => appendMessageUtil(prev, message));
+    return true;
+  }, []);
+
   const syncDiningQueries = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({
@@ -48,7 +55,7 @@ export function useDiningRecommendationStream({
     groupId,
     diningId,
     enabled,
-    onMessage: appendMessage,
+    onMessage: handleMessage,
     onDone: () => {
       void syncDiningQueries();
     },
