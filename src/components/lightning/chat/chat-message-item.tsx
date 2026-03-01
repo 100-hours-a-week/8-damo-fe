@@ -32,7 +32,7 @@ export function ChatMessageItem({
 }: Props) {
   const isMine = message.senderId === currentUserId;
   const timeText = formatChatTime(message.createdAt);
-  const senderLabel = isMine ? "나" : `사용자 ${message.senderId}`;
+  const senderLabel = isMine ? "나" : message.senderNickname;
   const unreadCount = message.unreadCount ?? 0;
   const shouldShowUnreadCount =
     Number.isFinite(unreadCount) && unreadCount > 0;

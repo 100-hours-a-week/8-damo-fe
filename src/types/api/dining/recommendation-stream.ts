@@ -6,6 +6,8 @@ export interface RecommendationStreamMessage {
   createdAt: string;
 }
 
+export type RecommendationHistoryResponse = RecommendationStreamMessage[];
+
 export type RecommendationStreamStatus =
   | "idle"
   | "connecting"

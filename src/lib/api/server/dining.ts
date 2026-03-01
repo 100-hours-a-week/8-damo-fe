@@ -4,6 +4,7 @@ import type {
   DiningCommonResponse,
   DiningSummary,
   DiningStatus,
+  RecommendationHistoryResponse,
 } from "@/src/types/api/dining";
 
 export async function getDiningCommon(params: {
@@ -23,4 +24,14 @@ export async function getGroupDiningSummaries(
   return serverGet<DiningSummary[]>(`/api/v1/groups/${groupId}/dining`, {
     params: { status },
   });
+}
+
+export async function getDiningRecommendationHistory(params: {
+  groupId: string;
+  diningId: string;
+}): Promise<RecommendationHistoryResponse> {
+  const { groupId, diningId } = params;
+  return serverGet<RecommendationHistoryResponse>(
+    `/api/v1/groups/${groupId}/dining/${diningId}/recommendation-streaming/history`
+  );
 }

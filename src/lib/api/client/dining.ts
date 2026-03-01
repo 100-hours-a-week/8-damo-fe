@@ -5,7 +5,8 @@ import type {
   RestaurantVoteResponse,
   ConfirmedRestaurantResponse,
   DiningCommonResponse,
-  AttendanceVoteResponse
+  AttendanceVoteResponse,
+  RecommendationHistoryResponse,
 } from "@/src/types/api/dining";
 
 export interface CreateDiningRequest {
@@ -58,6 +59,16 @@ export async function getDiningConfirmed(params: {
   return bffGet<ConfirmedRestaurantResponse>(
     `/groups/${groupId}/dining/${diningId}/confirmed`
   )
+}
+
+export async function getDiningRecommendationHistory(params: {
+  groupId: string;
+  diningId: string;
+}): Promise<ApiResponse<RecommendationHistoryResponse>> {
+  const { groupId, diningId } = params;
+  return bffGet<RecommendationHistoryResponse>(
+    `/groups/${groupId}/dining/${diningId}/recommendation-streaming/history`
+  );
 }
 
 export async function createDining(

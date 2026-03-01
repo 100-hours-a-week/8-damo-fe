@@ -1,32 +1,54 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
+import { ReactNode } from 'react'
 
-interface QueryProviderProps {
-  children: React.ReactNode;
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
+      },
+      mutations: {
+        retry: 0,
+      },
+    },
+  })
 }
 
-export function QueryProvider({ children }: QueryProviderProps) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: 1,
-            refetchOnWindowFocus: false,
-          },
-        },
-      })
-  );
+declare global {
+  var __QUERY_CLIENT__: QueryClient | undefined
+}
+
+function getQueryClient(): QueryClient {
+  if (typeof window === 'undefined') {
+    return createQueryClient()
+  }
+
+  if (!globalThis.__QUERY_CLIENT__) {
+    globalThis.__QUERY_CLIENT__ = createQueryClient()
+  }
+
+  return globalThis.__QUERY_CLIENT__
+}
+
+interface Props {
+  children: ReactNode
+}
+
+export function QueryProvider({ children }: Props) {
+  const queryClient = getQueryClient()
 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {process.env.NODE_ENV === "development" ? (
-        <ReactQueryDevtools initialIsOpen={false} />
-      ) : null}
     </QueryClientProvider>
-  );
+  )
 }
