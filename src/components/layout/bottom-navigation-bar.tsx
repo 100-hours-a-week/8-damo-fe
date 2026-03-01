@@ -76,7 +76,7 @@ export function BottomNavigationBar() {
                                 "flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors",
                                 active
                                     ? "text-primary"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    : "text-muted-foreground"
                             )}
                         >
                             <Icon className="size-5" />

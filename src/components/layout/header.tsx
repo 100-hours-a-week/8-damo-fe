@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, MoreVertical } from "lucide-react";
+import { ArrowLeft, Bell, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/src/lib/utils";
 import { Button } from "../ui/button";
@@ -10,6 +10,7 @@ interface HeaderProps {
   onBack?: () => void;
   showBackButton?: boolean;
   showMoreButton?: boolean;
+  showAlarmButton?: boolean;
   onMoreClick?: () => void;
   rightElement?: React.ReactNode;
   className?: string;
@@ -20,11 +21,20 @@ export function Header({
   onBack,
   showBackButton = true,
   showMoreButton = false,
+  showAlarmButton = false,
   onMoreClick,
   rightElement,
   className,
 }: HeaderProps) {
   const router = useRouter();
+
+  const handleMoreClick = () => {
+    if (onMoreClick) {
+      onMoreClick();
+    } else if (showAlarmButton) {
+      router.push("/notifications");
+    }
+  };
 
   const handleBack = () => {
     if (onBack) {
@@ -74,10 +84,14 @@ export function Header({
             variant="ghost"
             size="icon"
             className="sm:size-10"
-            onClick={onMoreClick}
-            aria-label="더보기"
+            onClick={handleMoreClick}
+            aria-label={showAlarmButton ? "알림" : "더보기"}
           >
-            <MoreVertical className="size-5 sm:size-6" />
+            {showAlarmButton ? (
+              <Bell className="size-5 sm:size-6 text-muted-foreground" />
+            ) : (
+              <MoreVertical className="size-5 sm:size-6" />
+            )}
           </Button>
         ) : (
           <div className="size-9 sm:size-10" />
