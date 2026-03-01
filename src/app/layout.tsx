@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { Toaster } from "@/src/components/ui/sonner";
 import localFont from 'next/font/local';
@@ -42,9 +43,11 @@ export default function RootLayout({
             <QueryProvider>
               <UserProvider>
                 <WebPushProvider>
-                  <RouteGuard>
-                    {children}
-                  </RouteGuard>
+                  <Suspense>
+                    <RouteGuard>
+                      {children}
+                    </RouteGuard>
+                  </Suspense>
                 </WebPushProvider>
               </UserProvider>
             </QueryProvider>
