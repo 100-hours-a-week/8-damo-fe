@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDiningAttendanceVote } from "@/src/lib/api/client/dining";
 
-const POLLING_INTERVAL_MS = 5_000;
+export const diningAttendanceVoteQueryKey = (groupId: string, diningId: string) =>
+  ["dining", "detail", groupId, diningId, "attendance-vote"] as const;
 
 export function useDiningAttendanceVote(
   groupId: string,
@@ -9,13 +10,12 @@ export function useDiningAttendanceVote(
   enabled: boolean
 ) {
   return useQuery({
-    queryKey: ["dining", "detail", groupId, diningId, "attendance-vote"],
+    queryKey: diningAttendanceVoteQueryKey(groupId, diningId),
     queryFn: async () => {
       const response = await getDiningAttendanceVote({ groupId, diningId });
       return response.data;
     },
     enabled,
-    refetchInterval: POLLING_INTERVAL_MS,
     refetchOnWindowFocus: true,
   });
 }
