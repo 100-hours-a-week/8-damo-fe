@@ -28,7 +28,7 @@ export function SegmentedTabs({
           type="button"
           onClick={() => onChange(tab.value)}
           className={cn(
-            "flex-1 rounded-[11px] px-3 py-2 text-base font-semibold transition-all",
+            "flex-1 cursor-pointer rounded-[11px] px-3 py-2 text-base font-semibold transition-all",
             value === tab.value
               ? "bg-white text-foreground shadow-[0px_4px_6px_0px_rgba(0,0,0,0.08)]"
               : "text-[#aeaeb2]"
