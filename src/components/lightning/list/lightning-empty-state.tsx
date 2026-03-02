@@ -23,7 +23,7 @@ export function LightningEmptyState({ activeTab }: LightningEmptyStateProps) {
       icon={EmptyStateIcon}
       title={emptyStateTitle}
       description={emptyStateDescription}
-      className="rounded-2xl border border-[#d1d1d6] bg-white py-14 sm:py-16"
+      className="rounded-2xl bg-white py-14 sm:py-16"
     />
   );
 }
