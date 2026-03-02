@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/src/components/ui/sonner";
 import { voteAttendance } from "@/src/lib/api/client/dining";
 import { type AttendanceVoteStatus } from "@/src/types/api/dining";
+import { diningAttendanceVoteQueryKey } from "@/src/hooks/dining/use-dining-attendance-vote";
 import { AttendanceVoteProgress } from "./attendance-vote-progress";
 import { AttendanceVotePrompt } from "./attendance-vote-prompt";
 import { AttendanceVoteActions } from "./attendance-vote-action";
@@ -24,6 +26,7 @@ export function AttendanceVotingSection({
   myVoteStatus,
 }: AttendanceVotingSectionProps) {
   const params = useParams<{ groupId: string; diningId: string }>();
+  const queryClient = useQueryClient();
   const [currentVoteStatus, setCurrentVoteStatus] =
     useState<AttendanceVoteStatus>(myVoteStatus);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +47,9 @@ export function AttendanceVotingSection({
       });
 
       setCurrentVoteStatus(vote);
+      await queryClient.invalidateQueries({
+        queryKey: diningAttendanceVoteQueryKey(params.groupId, params.diningId),
+      });
     } catch {
       toast.error("참석 투표에 실패했습니다.");
     } finally {

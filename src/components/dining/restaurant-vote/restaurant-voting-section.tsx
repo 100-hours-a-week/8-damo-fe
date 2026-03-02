@@ -1,12 +1,14 @@
 "use client"
 import type { RestaurantVoteResponse } from "@/src/types/api/dining";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { RestaurantCard } from "./restaurant-card";
 import { RestaurantVotingCarousel } from "./restaurant-voting-carousel";
 import { RestaurantVoteFallback } from "./restaurant-vote-fallback";
 import { RestaurantPermissionAction } from "./restaurant-permission-action";
 import { toast } from "@/src/components/ui/sonner";
 import { useMemo, useState } from "react";
+import { diningRestaurantVoteQueryKey } from "@/src/hooks/dining/use-dining-restaurant-vote";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,7 @@ export function RestaurantVotingSection({
   onAdditionalAttend,
 }: RestaurantVotingSectionProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useParams<{ groupId?: string | string[]; diningId?: string | string[] }>();
   const resolveParam = (value?: string | string[]) =>
     Array.isArray(value) ? value[0] : value;
@@ -105,6 +108,9 @@ export function RestaurantVotingSection({
         return;
       }
 
+      await queryClient.invalidateQueries({
+        queryKey: diningRestaurantVoteQueryKey(groupId, diningId),
+      });
       onRetryRecommendation?.();
     } catch {
       toast.error("재추천 요청에 실패했습니다.");
@@ -146,6 +152,9 @@ export function RestaurantVotingSection({
         recommendRestaurantsId: activeRestaurantId,
       });
 
+      await queryClient.invalidateQueries({
+        queryKey: diningRestaurantVoteQueryKey(groupId, diningId),
+      });
       toast.success("회식 장소가 확정되었습니다.");
       handleConfirmDining(activeRestaurantId);
     } catch {
