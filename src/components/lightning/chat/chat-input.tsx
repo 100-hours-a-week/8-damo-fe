@@ -38,6 +38,7 @@ export function ChatInput({ onSend, disabled = false }: Props) {
 
         <Button
           type="submit"
+          onMouseDown={(e) => e.preventDefault()}
           size="icon"
           disabled={!canSend}
           className="size-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-input disabled:text-muted-foreground"
