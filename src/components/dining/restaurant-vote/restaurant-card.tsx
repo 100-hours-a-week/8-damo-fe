@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { RestaurantInfo } from "./restaurant-info";
 import { RestaurantAction } from "./restaurant-action";
 import { voteRestaurant } from "@/src/lib/api/client/dining";
 import { toast } from "@/src/components/ui/sonner";
+import { diningRestaurantVoteQueryKey } from "@/src/hooks/dining/use-dining-restaurant-vote";
 import type {
   ConfirmedRestaurantResponse,
   RestaurantVoteResponse,
@@ -23,6 +25,7 @@ export function RestaurantCard({
   badgeLabel,
 }: RestaurantCardProps) {
   const params = useParams<{ groupId?: string | string[]; diningId?: string | string[] }>();
+  const queryClient = useQueryClient();
   const resolveParam = (value?: string | string[]) =>
     Array.isArray(value) ? value[0] : value;
   const groupId = resolveParam(params?.groupId);
@@ -141,6 +144,12 @@ export function RestaurantCard({
         syncServerVote(result.data);
       } else if (typeof result.data === "string") {
         syncServerVote({ restaurantVoteStatus: result.data });
+      }
+
+      if (groupId && diningId) {
+        await queryClient.invalidateQueries({
+          queryKey: diningRestaurantVoteQueryKey(groupId, diningId),
+        });
       }
     } catch {
       setVoteStatus(prevStatus);
