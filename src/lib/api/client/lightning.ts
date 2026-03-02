@@ -57,6 +57,7 @@ function mapChatMessage(dto: ChatMessagePageRaw["messages"][number]): ChatBroadc
   return {
     messageId: String(dto.messageId),
     senderId: String(dto.senderId),
+    senderNickname: dto.senderNickname,
     lightningId: String(dto.lightningId),
     chatType: dto.chatType,
     content: dto.content,

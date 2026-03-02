@@ -31,6 +31,7 @@ export interface ChatMessagePageResponse {
 export interface ChatMessageRaw {
   messageId: number | string;
   senderId: number | string;
+  senderNickname: string;
   lightningId: number | string;
   chatType: ChatType;
   content: string;

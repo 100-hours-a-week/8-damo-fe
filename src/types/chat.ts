@@ -44,7 +44,7 @@ export interface ChatBroadcastMessage {
   chatType: ChatType;
   content: string;
   createdAt: string;
-  senderNickname?: string;
+  senderNickname: string;
   unreadCount: number;
 }
 
