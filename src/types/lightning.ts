@@ -1,4 +1,4 @@
-export type LightningTab = "recruiting" | "joined";
+export type LightningTab = "joined" | "available";
 
 export type LocationPermission = "unknown" | "granted" | "denied";
 
@@ -46,6 +46,11 @@ export interface Restaurant {
     lat: number;
     lng: number;
   };
+}
+
+export interface LightningListPage {
+  items: LightningItem[];
+  nextCursor: string | null;
 }
 
 export interface LightningCreateState {

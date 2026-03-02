@@ -1,6 +1,6 @@
 import { formatLightningDateLabel } from "@/src/lib/utils";
 import type { ChatBroadcastMessage } from "@/src/types/chat";
-import type { LightningDetail } from "@/src/types/lightning";
+import type { LightningDetail, LightningListPage, LightningTab } from "@/src/types/lightning";
 import type {
   ChatMessagePageRaw,
   ChatMessagePageResponse,
@@ -89,6 +89,55 @@ function mapChatPage(dto: ChatMessagePageRaw): ChatMessagePageResponse {
   };
 }
 
+
+interface MyLightningRaw {
+  lightningId: string;
+  restaurantName: string;
+  description: string;
+  maxParticipants: number;
+  participantsCount: number;
+  lightningStatus?: string;
+  lightningDate?: string;
+  lightningData?: string;
+}
+
+interface LightningListDto {
+  data: MyLightningRaw[];
+  nextCursor: string | null;
+  hasNext: boolean;
+}
+
+export async function getLightningList(
+  tab: LightningTab,
+  lastLightningId?: string,
+  size = 10
+): Promise<ApiResponse<LightningListPage>> {
+  const endpoint =
+    tab === "joined" ? "/lightning/me/joined" : "/lightning/me/available";
+  const params: Record<string, string | number> = { size };
+  if (lastLightningId) params.lastLightningId = lastLightningId;
+
+  const response = await bffGet<LightningListDto>(endpoint, { params });
+  const items = response.data.data.map((item) => ({
+    id: item.lightningId,
+    restaurantName: item.restaurantName,
+    description: item.description,
+    maxParticipants: item.maxParticipants,
+    participantsCount: item.participantsCount,
+    lightningStatus: item.lightningStatus,
+    dateLabel: formatLightningDateLabel(
+      item.lightningDate ?? item.lightningData ?? ""
+    ),
+  }));
+
+  return {
+    ...response,
+    data: {
+      items,
+      nextCursor: response.data.hasNext ? response.data.nextCursor : null,
+    },
+  };
+}
 
 export async function getLightningDetail(
   lightningId: string
