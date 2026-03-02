@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { useWebPushContext } from '@/src/components/providers/web-push-provider'
 import { toast } from '@/src/components/ui/sonner'
+import { patchPushNotification } from '@/src/lib/api/client/user'
 
 interface UseHandlePushToggleResult {
   isPushEnabled: boolean
@@ -12,13 +13,14 @@ interface UseHandlePushToggleResult {
 }
 
 export function useHandlePushToggle(): UseHandlePushToggleResult {
-  const { isEnabled, isHydrated, loading, enablePush, disablePush } = useWebPushContext()
+  const { isEnabled, isHydrated, loading, token, enablePush, disablePush } = useWebPushContext()
 
   const handlePushToggle = useCallback(
     async (checked: boolean) => {
       if (checked) {
         const issuedToken = await enablePush()
         if (issuedToken) {
+          await patchPushNotification({ fcmToken: issuedToken, isPushNotificationAllowed: true })
           toast.success('푸시 알림이 활성화되었습니다.')
           return
         }
@@ -35,10 +37,11 @@ export function useHandlePushToggle(): UseHandlePushToggleResult {
         return
       }
 
+      await patchPushNotification({ fcmToken: token ?? '', isPushNotificationAllowed: false })
       await disablePush()
       toast.success('푸시 알림이 비활성화되었습니다.')
     },
-    [disablePush, enablePush]
+    [disablePush, enablePush, token]
   )
 
   return {
