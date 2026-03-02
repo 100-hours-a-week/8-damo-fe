@@ -49,6 +49,15 @@ interface ProfileData {
   otherCharacteristics: string | null;
 }
 
+interface PushData {
+  fcmToken: string;
+  isPushNotificationAllowed: boolean;
+}
+
 export async function getMyProfile(): Promise<ApiResponse<ProfileData>> {
   return bffGet<ProfileData>("/users/me/profile");
+}
+
+export async function patchPushNotification(data: PushData): Promise<ApiResponse<void>> {
+  return bffPatch<void>("/users/me/push-notification", data)
 }
