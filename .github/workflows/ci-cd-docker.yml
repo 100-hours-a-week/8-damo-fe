@@ -78,7 +78,7 @@ jobs:
             echo "NEXT_PUBLIC_KAKAO_REDIRECT_URI=${REDIRECT_URI}"
             echo "NEXT_PUBLIC_S3_CDN=${{ secrets.NEXT_PUBLIC_S3_CDN }}"
             echo "NEXT_PUBLIC_KAKAO_SDK_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_SDK_KEY }}"
-            echo "NEXT_PUBLIC_KAKAO_SDK_TEST_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_MAP_KEY }}"
+            echo "NEXT_PUBLIC_KAKAO_SDK_TEST_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_SDK_TEST_KEY }}"
             echo "NEXT_PUBLIC_URL=${{ secrets.NEXT_PUBLIC_URL }}"
             echo "NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY }}"
             echo "NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}"
