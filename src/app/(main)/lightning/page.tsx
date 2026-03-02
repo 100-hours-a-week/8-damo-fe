@@ -1,10 +1,6 @@
 import { Suspense } from "react";
 import { LightningPageContent, LightningPageFallback } from "@/src/components/lightning";
 import type { LightningTab } from "@/src/types/lightning";
-import {
-  getJoinedLightnings,
-  getRecruitingLightnings,
-} from "@/src/lib/api/server/lightning";
 
 interface PageProps {
   searchParams?: Promise<{ tab?: string }>;
