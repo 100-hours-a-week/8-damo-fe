@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -47,7 +48,7 @@ export function LightningCreateContainer() {
     setIsSubmitting(true);
 
     try {
-      await createLightning({
+      const response = await createLightning({
         restaurantId: "285564029998141440",
         maxParticipants,
         description,
@@ -55,9 +56,17 @@ export function LightningCreateContainer() {
       });
       toast.success("번개가 생성되었습니다.");
       router.push("/lightning");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error("번개 생성에 실패했습니다.");
+
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.errorMessage ??
+          "번개 생성에 실패했습니다.";
+        toast.error(message);
+      } else {
+        toast.error("번개 생성에 실패했습니다.");
+      }
     } finally {
       setIsSubmitting(false);
     }
