@@ -11,22 +11,17 @@ interface PageProps {
 }
 
 const isLightningTab = (value?: string): value is LightningTab =>
-  value === "recruiting" || value === "joined";
+  value === "joined" || value === "available";
 
 export default async function LightningPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const activeTab: LightningTab = isLightningTab(resolvedSearchParams?.tab)
     ? resolvedSearchParams.tab
-    : "recruiting";
-
-  const items =
-    activeTab === "joined"
-      ? await getJoinedLightnings()
-      : await getRecruitingLightnings();
+    : "joined";
 
   return (
     <Suspense fallback={<LightningPageFallback />}>
-      <LightningPageContent activeTab={activeTab} items={items} />
+      <LightningPageContent activeTab={activeTab} />
     </Suspense>
   );
 }

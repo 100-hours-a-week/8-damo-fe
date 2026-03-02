@@ -17,6 +17,7 @@ interface LightningPageContentProps {
 const TAB_OPTIONS: { value: LightningTab; label: string }[] = [
   { value: "recruiting", label: "모집 중 번개" },
   { value: "joined", label: "내가 참여한 번개" },
+  { value: "available", label: "모집 중 번개" },
 ];
 
 export function LightningPageContent({ items, activeTab }: LightningPageContentProps) {
