@@ -12,7 +12,7 @@ import type {
   CreateLightningRequest,
   LightningDetailResponse,
 } from "@/src/types/api/lightning/lightning";
-import { bffGet, bffPost, type ApiResponse } from "./index";
+import { bffGet, bffPost, bffDelete, type ApiResponse } from "./index";
 
 function mapLightningDetail(raw: LightningDetailResponse): LightningDetail {
   return {
@@ -162,6 +162,12 @@ export async function joinLightning(
   lightningId: string
 ): Promise<ApiResponse<string>> {
   return bffPost<string>(`/lightning/${lightningId}/users/me`);
+}
+
+export async function leaveLightning(
+  lightningId: string
+): Promise<ApiResponse<void>> {
+  return bffDelete<void>(`/lightning/${lightningId}/users/me`);
 }
 
 export async function getLightningChatMessages(
