@@ -78,8 +78,6 @@ export function updateUnreadCountInCache(
             0
           );
 
-          console.log(messageId, nextUnreadCount, currentUnreadCount)
-
           if (nextUnreadCount === currentUnreadCount) {
             return message;
           }

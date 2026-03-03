@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   useInfiniteQuery,
   useQueryClient,
@@ -68,6 +68,7 @@ export function useLightningChatInfinite({
 }: UseLightningChatInfiniteOptions) {
   const queryClient = useQueryClient();
   const queryKey = getLightningChatMessagesQueryKey(lightningId);
+  const isInitializedRef = useRef(false);
 
   const query = useInfiniteQuery({
     queryKey,
@@ -115,6 +116,15 @@ export function useLightningChatInfinite({
       return Number(current) > Number(max) ? current : max;
     }, "0");
   }, [messages]);
+  const markInitialized = useCallback(() => {
+    isInitializedRef.current = true;
+  }, []);
+
+  const fetchPreviousPage = async () => {
+    if (!isInitializedRef.current) return;
+    await query.fetchPreviousPage();
+  };
+
   const recoverMissedMessages = useCallback(async () => {
     await recoverMissedMessagesFromServer(
       queryClient,
@@ -134,5 +144,7 @@ export function useLightningChatInfinite({
     readBoundary,
     maxMessageId,
     recoverMissedMessages,
+    fetchPreviousPage,
+    markInitialized,
   };
 }

@@ -38,6 +38,7 @@ export function LightningChatClient({
     isFetchingNextPage,
     fetchPreviousPage,
     fetchNextPage,
+    markInitialized,
     recoverMissedMessages,
     error: queryError,
   } = useLightningChatInfinite({ lightningId });
@@ -114,6 +115,7 @@ export function LightningChatClient({
         isFetchingNextPage={isFetchingNextPage}
         fetchPreviousPage={fetchPreviousPage}
         fetchNextPage={fetchNextPage}
+        markInitialized={markInitialized}
         lastChatMessageId={lastChatMessageId}
       />
 

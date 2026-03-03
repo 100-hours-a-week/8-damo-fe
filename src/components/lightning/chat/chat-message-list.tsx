@@ -17,13 +17,14 @@ interface Props {
   currentUserId: string | null;
   readBoundary: ChatReadBoundary | null;
   initialScrollMode: ChatInitialScrollMode;
-  anchorCursor: number;
+  anchorCursor: string | null;
   hasPreviousPage: boolean;
   hasNextPage: boolean;
   isFetchingPreviousPage: boolean;
   isFetchingNextPage: boolean;
   fetchPreviousPage: () => Promise<unknown>;
   fetchNextPage: () => Promise<unknown>;
+  markInitialized: () => void;
   lastChatMessageId: string | null;
 }
 
@@ -49,6 +50,7 @@ export function ChatMessageList({
   isFetchingNextPage,
   fetchPreviousPage,
   fetchNextPage,
+  markInitialized,
   lastChatMessageId,
 }: Props) {
   const [scrollRoot, setScrollRoot] =
@@ -88,6 +90,7 @@ export function ChatMessageList({
     isFetchingNextPage,
     fetchPreviousPage,
     fetchNextPage,
+    markInitialized,
     topInView,
     bottomInView,
     lastChatMessageId,

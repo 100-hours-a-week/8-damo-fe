@@ -23,7 +23,7 @@ export interface ChatPageInfo {
 export interface ChatMessagePageResponse {
   messages: ChatBroadcastMessage[];
   pageInfo: ChatPageInfo;
-  anchorCursor: number;
+  anchorCursor: string
   initialScrollMode: ChatInitialScrollMode;
   readBoundary: ChatReadBoundary | null;
 }
@@ -57,7 +57,7 @@ export interface ChatMessagePageRaw {
     previousPageParam?: ChatPageParamRaw | null;
     nextPageParam?: ChatPageParamRaw | null;
   };
-  anchorCursor: number | string;
+  anchorCursor: string;
   initialScrollMode?: ChatInitialScrollMode;
   readBoundary?: ChatReadBoundaryRaw | null;
 }

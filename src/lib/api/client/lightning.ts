@@ -73,7 +73,7 @@ function mapChatPage(dto: ChatMessagePageRaw): ChatMessagePageResponse {
       previousPageParam: mapChatPageParam(dto.pageInfo?.previousPageParam),
       nextPageParam: mapChatPageParam(dto.pageInfo?.nextPageParam),
     },
-    anchorCursor: Number(dto.anchorCursor),
+    anchorCursor: dto.anchorCursor,
     initialScrollMode: dto.initialScrollMode ?? "NONE",
     readBoundary: dto.readBoundary
       ? {

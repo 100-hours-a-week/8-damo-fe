@@ -21,7 +21,7 @@ export function appendChatMessageToCache(
                 previousPageParam: null,
                 nextPageParam: null,
               },
-              anchorCursor: Number(incomingMessage.messageId),
+              anchorCursor: incomingMessage.messageId,
               initialScrollMode: "BOTTOM",
               readBoundary: null,
             },
