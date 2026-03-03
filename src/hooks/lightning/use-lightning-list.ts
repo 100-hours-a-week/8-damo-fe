@@ -16,7 +16,7 @@ export function useLightningList(tab: LightningTab) {
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    refetchInterval: 10_000,
+    staleTime: 120_000, 
     refetchOnWindowFocus: true
   });
 }
