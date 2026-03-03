@@ -20,7 +20,7 @@ export function AdditionalNotesForm() {
   const { additionalNotes, setAdditionalNotes, getCharacteristics } =
     useOnboardingStore();
 
-  const { control, handleSubmit } = useForm<AdditionalNotesFormValues>({
+  const { control, handleSubmit, formState: { isValid } } = useForm<AdditionalNotesFormValues>({
     resolver: zodResolver(additionalNotesSchema),
     mode: "onChange",
     defaultValues: {
@@ -59,11 +59,12 @@ export function AdditionalNotesForm() {
       <Controller
         name="additionalNotes"
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState: { error } }) => (
           <AdditionalNotesField
             value={field.value}
             onChange={field.onChange}
             showLabel={false}
+            error={error?.message}
           />
         )}
       />
@@ -71,7 +72,7 @@ export function AdditionalNotesForm() {
       <div className="mt-auto pt-8">
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={!isValid || isSubmitting}
           className="h-16 w-full rounded-lg bg-primary text-base font-semibold text-white shadow-md hover:bg-primary/90 disabled:opacity-50"
         >
           {isSubmitting ? "처리중..." : "완료"}
