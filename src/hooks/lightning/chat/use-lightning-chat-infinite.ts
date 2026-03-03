@@ -120,10 +120,10 @@ export function useLightningChatInfinite({
     isInitializedRef.current = true;
   }, []);
 
-  const fetchPreviousPage = useCallback(async () => {
+  const fetchPreviousPage = async () => {
     if (!isInitializedRef.current) return;
     await query.fetchPreviousPage();
-  }, [query.fetchPreviousPage]);
+  };
 
   const recoverMissedMessages = useCallback(async () => {
     await recoverMissedMessagesFromServer(
