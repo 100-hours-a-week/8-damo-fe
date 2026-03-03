@@ -1,19 +1,37 @@
 'use client'
 
-import { GroupSummary } from "@/src/types/groups";
+import { useEffect, useRef } from "react";
 import { GroupCard } from "./group-card";
 import { EmptyState } from "@/src/components/ui/empty-state";
 import { Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useMyGroupList } from "@/src/hooks/groups/use-my-group-list";
 
-interface MyGroupListProps {
-  groupSummaryList?: GroupSummary[];
-}
-
-export function MyGroupList({ groupSummaryList = [] }: MyGroupListProps) {
+export function MyGroupList() {
   const router = useRouter();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useMyGroupList();
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-    if (groupSummaryList.length === 0) {
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "50%", threshold: 0.3 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const groups = data?.pages.flatMap((page) => page.items) ?? [];
+
+  if (groups.length === 0) {
     return (
       <div className="grid grid-cols-2 gap-3 px-4 pb-20 sm:gap-4 sm:px-5 sm:pb-24">
         <div className="col-span-2">
@@ -28,7 +46,7 @@ export function MyGroupList({ groupSummaryList = [] }: MyGroupListProps) {
 
   return (
     <div className="grid grid-cols-2 gap-8 px-4 pb-20 sm:gap-4 sm:px-5 sm:pb-24">
-      {groupSummaryList.map((groupSummary) => (
+      {groups.map((groupSummary) => (
         <GroupCard
           key={groupSummary.id}
           groupSummary={groupSummary}
@@ -37,6 +55,7 @@ export function MyGroupList({ groupSummaryList = [] }: MyGroupListProps) {
           }}
         />
       ))}
+      <div ref={sentinelRef} className="col-span-2 h-4" />
     </div>
   );
 }
