@@ -155,7 +155,7 @@ jobs:
           EOF
           chmod +x deploy/scripts/*.sh
 
-          zip -r deployment.zip deploy/scripts deploy/appspec.yml deploy/docker-compose.yml
+          cd deploy && zip -r ../deployment.zip scripts appspec.yml docker-compose.yml
 
       - name: Upload bundle to S3
         run: |
