@@ -10,6 +10,27 @@ export interface SheetRow {
   metrics: LighthouseMetrics;
 }
 
+type MetricStatus = '🟢' | '🟡' | '🔴';
+
+function getStatusByThresholds(
+  value: number,
+  thresholds: { goodMax?: number; needsImprovementMax?: number; goodMin?: number; needsImprovementMin?: number },
+): MetricStatus {
+  if (typeof thresholds.goodMax === 'number' && typeof thresholds.needsImprovementMax === 'number') {
+    if (value <= thresholds.goodMax) return '🟢';
+    if (value <= thresholds.needsImprovementMax) return '🟡';
+    return '🔴';
+  }
+
+  if (typeof thresholds.goodMin === 'number' && typeof thresholds.needsImprovementMin === 'number') {
+    if (value >= thresholds.goodMin) return '🟢';
+    if (value >= thresholds.needsImprovementMin) return '🟡';
+    return '🔴';
+  }
+
+  return '🔴';
+}
+
 export async function appendToSheet(rows: SheetRow[]): Promise<void> {
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -18,6 +39,11 @@ export async function appendToSheet(rows: SheetRow[]): Promise<void> {
   const sheets = google.sheets({ version: 'v4', auth });
 
   const values = rows.map(({ measured_at, label, mode, url, metrics }) => [
+    getStatusByThresholds(metrics.fcp, { goodMax: 1800, needsImprovementMax: 3000 }),
+    getStatusByThresholds(metrics.lcp, { goodMax: 2500, needsImprovementMax: 4000 }),
+    getStatusByThresholds(metrics.cls, { goodMax: 0.1, needsImprovementMax: 0.25 }),
+    getStatusByThresholds(metrics.tbt, { goodMax: 200, needsImprovementMax: 600 }),
+    getStatusByThresholds(metrics.score, { goodMin: 90, needsImprovementMin: 50 }),
     measured_at,
     label,
     mode,
@@ -31,7 +57,7 @@ export async function appendToSheet(rows: SheetRow[]): Promise<void> {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: 'Sheet1!A:I',
+    range: 'Sheet1!A:N',
     valueInputOption: 'RAW',
     requestBody: { values },
   });
