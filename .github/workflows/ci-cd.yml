@@ -1,15 +1,24 @@
-name: Frontend CI/CD
+name: Frontend CI/CD - MAIN
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: 
+      - main
   push:
-    branches: [main, develop]
+    branches: 
+      - main
 
 env:
   NODE_VERSION: "20"
   REMOTE_DIR: /home/ubuntu/opt/fe-prod
   ARTIFACT_FILE: next-build.tar.gz
+  AWS_REGION: ap-northeast-2
+  
+  DEPLOYMENT_APP: damo-fe
+  DEPLOYMENT_GROUP_PROD: prod-damo-fe
+
+  ECR_REGISTRY: ${{secrets.ECR_REGISTRY}}
+  ECR_REPO_PROD: prod/fe
 
 jobs:
   ci:
@@ -39,79 +48,174 @@ jobs:
       # - name: Run Unit Tests
       #   run: npm run test
 
-      - name: Build Next.js App
-        env:
-          NEXT_PUBLIC_KAKAO_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_KAKAO_CLIENT_ID }}
-          NEXT_PUBLIC_KAKAO_REDIRECT_URI: ${{ secrets.NEXT_PUBLIC_KAKAO_REDIRECT_URI }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
-          NEXT_PUBLIC_S3_CDN: ${{ secrets.NEXT_PUBLIC_S3_CDN }}
-          NEXT_PUBLIC_KAKAO_SDK_TEST_KEY: ${{ secrets.NEXT_PUBLIC_KAKAO_MAP_KEY }}
-          NEXT_PUBLIC_KAKAO_SDK_KEY: ${{ secrets.NEXT_PUBLIC_KAKAO_SDK_KEY }}
-        run: npm run build
-
-      - name: Package Next.js build (non-standalone)
-        run: |
-          rm -rf deploy_fe
-          mkdir -p deploy_fe
-          
-          # 빌드 산출물 전체
-          cp -r .next deploy_fe/.next
-          
-          # public (사용하면)
-          if [ -d "public" ]; then
-          cp -r public deploy_fe/public
-          fi
-          
-          # 실행에 필요한 파일들
-          cp package.json deploy_fe/package.json
-          
-          # lockfile도 같이 넣는 게 안전
-          if [ -f package-lock.json ]; then
-          cp package-lock.json deploy_fe/package-lock.json
-          fi
-          
-          # next.config.* 필요할 수도 있음(런타임에서 참조하는 경우)
-          if [ -f next.config.js ]; then cp next.config.js deploy_fe/next.config.js; fi
-          if [ -f next.config.mjs ]; then cp next.config.mjs deploy_fe/next.config.mjs; fi
-          
-          tar -czf next-build.tar.gz -C deploy_fe .
-
-      - name: Upload bundle to server (SCP)
-        if: github.event_name == 'push'
-        # if: github.event_name == 'push' && github.ref_name == 'develop'
-
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.FRONT_PROD_SERVER_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ${{ env.ARTIFACT_FILE }}
-          target: ${{ env.REMOTE_DIR }}/incoming/
-
-  deploy:
-    name: CD (prod deploy)
-    runs-on: ubuntu-latest
+  build_push:
+    name: Build & Push (ECR)
+    runs-on: ubuntu-24.04-arm
     needs: [ci]
     if: github.event_name == 'push' && needs.ci.result == 'success'
-    #    if: github.event_name == 'push' && github.ref_name == 'develop' && needs.ci.result == 'success'
 
     steps:
-      - name: Deploy via SSH (run deploy.sh)
-        uses: appleboy/ssh-action@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.FRONT_PROD_SERVER_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
-          script: |
-            set -e
-            cd ${{ env.REMOTE_DIR }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-            echo "Artifact: ${{ env.REMOTE_DIR }}/incoming/${{ env.ARTIFACT_FILE }}"
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-            chmod +x deploy.sh
-            ./deploy.sh "${{ env.REMOTE_DIR }}/incoming/${{ env.ARTIFACT_FILE }}"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env
+        run: |
+         {
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL_PROD }}"
+            echo "NEXT_PUBLIC_KAKAO_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KAKAO_CLIENT_ID }}"
+            echo "NEXT_PUBLIC_KAKAO_REDIRECT_URI=${{ secrets.NEXT_PUBLIC_KAKAO_REDIRECT_URI_PROD }}"
+            echo "NEXT_PUBLIC_S3_CDN=${{ secrets.NEXT_PUBLIC_S3_CDN }}"
+            echo "NEXT_PUBLIC_KAKAO_SDK_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_SDK_KEY }}"
+            echo "NEXT_PUBLIC_KAKAO_SDK_TEST_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_SDK_TEST_KEY }}"
+            echo "NEXT_PUBLIC_URL=${{ secrets.NEXT_PUBLIC_URL }}"
+            echo "NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY }}"
+            echo "NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}"
+            echo "NEXT_PUBLIC_BROKER_URL=${{ secrets.NEXT_PUBLIC_BROKER_URL_PROD }}"
+            echo "NEXT_PUBLIC_RECEIPT_WASM=${{ secrets.NEXT_PUBLIC_RECEIPT_WASM }}"
+            echo "NEXT_PUBLIC_RECEIPT_MODEL=${{ secrets.NEXT_PUBLIC_RECEIPT_MODEL }}"
+            echo "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}"
+            echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}"
+            echo "NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}"
+            echo "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}"
+            echo "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}"
+            echo "NEXT_PUBLIC_FIREBASE_APPID=${{ secrets.NEXT_PUBLIC_FIREBASE_APPID }}"
+            echo "NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}"
+          } > .env
+
+      - name: Resolve environment
+        env:
+          ECR_REPO_PROD: 080598576517.dkr.ecr.ap-northeast-2.amazonaws.com/prod/fe
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG=${SHORT_SHA}
+          echo "ECR_REPO=${ECR_REPO_PROD}" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+          echo "IMAGE=${ECR_REPO}:${IMAGE_TAG}" >> "$GITHUB_ENV"
+          echo "LATEST_IMAGE=${ECR_REPO}:latest" >> "$GITHUB_ENV"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}
+            ${{ env.LATEST_IMAGE }}
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: CD (CodeDeploy - Prod)
+    needs: build_push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref_name == 'main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve deployment target
+        run: |
+          echo "APPLICATION_NAME=${DEPLOYMENT_APP}" >> "$GITHUB_ENV"
+          echo "DEPLOYMENT_GROUP=${DEPLOYMENT_GROUP_PROD}" >> "$GITHUB_ENV"
+          echo "ECR_REPO=${ECR_REGISTRY}/${ECR_REPO_PROD}" >> "$GITHUB_ENV"
+          echo "ECR_REGISTRY=${ECR_REGISTRY}" >> "$GITHUB_ENV"
+          SHORT_SHA=${GITHUB_SHA::7}
+          echo "IMAGE_TAG=${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      - name: Prepare revision bundle (appspec/scripts + image info)
+        run: |
+          cat > scripts/image.env <<EOF
+          IMAGE_TAG=${IMAGE_TAG}
+          ECR_REPO=${ECR_REPO}
+          ECR_REGISTRY=${ECR_REGISTRY}
+          EOF
+          chmod +x scripts/*.sh
+
+          zip -r deployment.zip appspec.yml scripts/ docker-compose.yml
+
+      - name: Upload bundle to S3
+        run: |
+          S3_BUCKET="${{ secrets.CODEDEPLOY_BUCKET }}"
+          S3_KEY="codedeploy/prod/fe/${GITHUB_SHA::7}.zip"
+          aws s3 cp deployment.zip "s3://${S3_BUCKET}/${S3_KEY}"
+          echo "S3_BUCKET=${S3_BUCKET}" >> $GITHUB_ENV
+          echo "S3_KEY=${S3_KEY}" >> $GITHUB_ENV
+
+      - name: Create CodeDeploy deployment (from S3)
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name "${APPLICATION_NAME}" \
+            --deployment-group-name "${DEPLOYMENT_GROUP}" \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --s3-location bucket="${S3_BUCKET}",key="${S3_KEY}",bundleType=zip \
+            --file-exists-behavior OVERWRITE \
+            --ignore-application-stop-failures \
+            --query deploymentId \
+            --output text)
+          echo "DEPLOYMENT_ID=${DEPLOYMENT_ID}" >> "$GITHUB_ENV"
+          echo "Created deployment: ${DEPLOYMENT_ID}"
+
+      - name: Wait for deployment complete
+        run: |
+          DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}
+          echo "Waiting for deployment ${DEPLOYMENT_ID} to complete..."
+
+          while true; do
+            STATUS=$(aws deploy get-deployment \
+              --deployment-id "${DEPLOYMENT_ID}" \
+              --query 'deploymentInfo.status' \
+              --output text)
+            
+            EVENT=$(aws deploy get-deployment \
+              --deployment-id "${DEPLOYMENT_ID}" \
+              --query 'deploymentInfo.lifecycleEvents[0].name' \
+              --output text)
+            
+            EVENT_STATUS=$(aws deploy get-deployment \
+              --deployment-id "${DEPLOYMENT_ID}" \
+              --query 'deploymentInfo.lifecycleEvents[0].status' \
+              --output text)
+            
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - Status: ${STATUS}, Event: ${EVENT} (${EVENT_STATUS})"
+            
+            case "${STATUS}" in
+              Succeeded)
+                echo "Deployment succeeded!"
+                exit 0
+                ;;
+              Failed|Stopped)
+                echo "Deployment ${STATUS}"
+                exit 1
+                ;;
+              *)
+                sleep 10
+                ;;
+            esac
+          done
 
   k6_test:
     needs: deploy
@@ -154,5 +258,5 @@ jobs:
 
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"username\":\"Frontend CI/CD\",\"content\":\"🖥️ Frontend CI/CD 결과\\n- CI: **${CI_RESULT}**\\n- Deploy: **${DEPLOY_RESULT}**\\n- K6: **${K6_RESULT}**\\n🔗 [${REF}](${RUN_URL})\"}" \
+               -d "{\"username\":\"Frontend CI/CD\",\"content\":\"🖥️ Frontend CI/CD 결과\\n- CI: **${CI_RESULT}**\\n- Deploy-PROD: **${DEPLOY_RESULT}**\\n- K6: **${K6_RESULT}**\\n🔗 [${REF}](${RUN_URL})\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
