@@ -101,7 +101,7 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           IMAGE_TAG=${SHORT_SHA}
-          echo "ECR_REPO=${ECR_REPO_PROD}" >> "$GITHUB_ENV"
+          echo "ECR_REPO=${ECR_REGISTRY}/${ECR_REPO_PROD}" >> "$GITHUB_ENV"
           echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
           echo "IMAGE=${ECR_REPO}:${IMAGE_TAG}" >> "$GITHUB_ENV"
           echo "LATEST_IMAGE=${ECR_REPO}:latest" >> "$GITHUB_ENV"
