@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import axios, { AxiosError } from "axios";
 import { parseCookie } from "@/src/lib/cookie";
 import { passthroughResponse, errorResponse, type ApiResponse } from "@/src/app/bff/_lib";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function POST() {
+interface RouteParams {
+  params: Promise<{ userId: string }>;
+}
+
+export async function POST(_: NextRequest, { params }: RouteParams) {
   if (process.env.APP_ENV === "prod") {
     return errorResponse("Not Found", 404);
   }
@@ -15,8 +19,10 @@ export async function POST() {
   }
 
   try {
+    const { userId } = await params;
+
     const response = await axios.post<ApiResponse<null>>(
-      `${API_BASE_URL}/api/v1/auth/test`,
+      `${API_BASE_URL}/api/v1/auth/test/${encodeURIComponent(userId)}`,
       {},
       {
         headers: { "Content-Type": "application/json" },
@@ -24,10 +30,14 @@ export async function POST() {
       }
     );
 
-    const res = new NextResponse(null, { status: response.status })
+    const res = new NextResponse(null, { status: response.status });
     const setCookieHeader = response.headers["set-cookie"];
     if (setCookieHeader) {
-      for (const cookieString of setCookieHeader) {
+      const cookieStrings = Array.isArray(setCookieHeader)
+        ? setCookieHeader
+        : [setCookieHeader];
+
+      for (const cookieString of cookieStrings) {
         const parsed = parseCookie(cookieString.trim());
         if (parsed) {
           res.cookies.set(parsed.name, parsed.value, parsed.options);
