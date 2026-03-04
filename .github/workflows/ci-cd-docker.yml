@@ -2,9 +2,11 @@ name: Frontend CI/CD (Docker)
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: 
+      - develop
   push:
-    branches: [main, develop]
+    branches: 
+      - develop
 
 env:
   NODE_VERSION: "20"
@@ -198,5 +200,5 @@ jobs:
 
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"username\":\"Frontend CI/CD\",\"content\":\"🖥️ Frontend CI/CD 결과\\n- CI: **${CI_RESULT}**\\n- Build: **${BUILD_RESULT}**\\n- Deploy: **${DEPLOY_RESULT}**\\n- K6: **${K6_RESULT}**\\n🔗 [${REF}](${RUN_URL})\"}" \
+               -d "{\"username\":\"Frontend CI/CD\",\"content\":\"🖥️ Frontend CI/CD 결과\\n- CI: **${CI_RESULT}**\\n- Build: **${BUILD_RESULT}**\\n- Deploy-DEV: **${DEPLOY_RESULT}**\\n- K6: **${K6_RESULT}**\\n🔗 [${REF}](${RUN_URL})\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
