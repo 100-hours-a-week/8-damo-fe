@@ -3,14 +3,6 @@ set -e
 
 echo "AfterInstall: Setting up environment..."
 
-# Create .env file if not exists
-if [ ! -f "/home/ubuntu/app/.env" ]; then
-    echo "Creating .env file..."
-    if [ -f "/home/ubuntu/app_backup/.env" ]; then
-        sudo cp /home/ubuntu/app_backup/.env /home/ubuntu/app/.env
-    fi
-fi
-
 # login ECR
 echo "AfterInstall: Logging in to ECR..."
 source /home/ubuntu/app/scripts/image.env
