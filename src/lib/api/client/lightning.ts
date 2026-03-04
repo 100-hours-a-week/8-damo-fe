@@ -23,8 +23,8 @@ function mapRecommendation(raw: LightningRecommendationResponse): Restaurant {
     description: "",
     phoneNumber: raw.phoneNumber,
     location: {
-      lat: raw.y,
-      lng: raw.x,
+      lat: Number(raw.y),
+      lng: Number(raw.x),
     },
   };
 }
@@ -168,8 +168,8 @@ export async function getLightningDetail(
 }
 
 export async function getLightningRecommendation(
-  x: number,
-  y: number
+  x: string,
+  y: string
 ): Promise<ApiResponse<Restaurant>> {
   const response = await bffGet<LightningRecommendationResponse>(
     "/lightning/recommendation",

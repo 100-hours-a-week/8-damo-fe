@@ -16,8 +16,8 @@ export interface LightningDetailParticipantResponse {
 export interface LightningRecommendationResponse {
   restaurantId: string;
   restaurantName: string;
-  x: number;
-  y: number;
+  x: string;
+  y: string;
   phoneNumber: string;
 }
 
