@@ -8,11 +8,11 @@ if [ -f scripts/image.env ]; then
   export $(grep -v '^#' scripts/image.env | xargs)
 fi
 
-sudo docker compose pull
+sudo -E docker compose pull
 
-sudo docker compose up -d
+sudo -E docker compose up -d
 
 echo "Waiting for services to be healthy..."
 sleep 30
 
-sudo docker compose ps
+sudo -E docker compose ps
