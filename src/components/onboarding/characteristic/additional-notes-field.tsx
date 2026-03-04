@@ -9,6 +9,7 @@ interface AdditionalNotesFieldProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   showLabel?: boolean;
+  error?: string;
 }
 
 export function AdditionalNotesField({
@@ -16,6 +17,7 @@ export function AdditionalNotesField({
   onChange,
   disabled,
   showLabel = true,
+  error,
 }: AdditionalNotesFieldProps) {
   const isMaxLength = value.length >= MAX_LENGTH;
 
@@ -34,6 +36,9 @@ export function AdditionalNotesField({
         maxLength={MAX_LENGTH}
         className="min-h-[100px] rounded-lg border-none bg-muted px-4 py-4 text-base font-semibold placeholder:text-muted-foreground"
       />
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
       <p
         className={cn(
           "text-sm text-muted-foreground",

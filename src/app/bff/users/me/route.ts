@@ -27,3 +27,15 @@ export async function PATCH(request: NextRequest) {
     return errorResponse("요청 중 오류가 발생했습니다.", 500);
   }
 }
+
+export async function DELETE() {
+  try {
+    const response = await bffAxios.delete("/api/v1/users/me");
+    return passthroughResponse(response.data, response.status);
+  } catch (error) {
+    if (error instanceof AxiosError && error.response) {
+      return passthroughResponse(error.response.data, error.response.status);
+    }
+    return errorResponse("요청 중 오류가 발생했습니다.", 500);
+  }
+}

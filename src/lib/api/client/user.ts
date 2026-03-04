@@ -1,4 +1,4 @@
-import { bffGet, bffPost, bffPatch, type ApiResponse } from "./index";
+import { bffDelete, bffGet, bffPost, bffPatch, type ApiResponse } from "./index";
 import type { User } from "@/src/stores/user-store";
 
 export async function getMe(): Promise<ApiResponse<User>> {
@@ -60,4 +60,8 @@ export async function getMyProfile(): Promise<ApiResponse<ProfileData>> {
 
 export async function patchPushNotification(data: PushData): Promise<ApiResponse<void>> {
   return bffPatch<void>("/users/me/push-notification", data)
+}
+
+export async function deleteMe(): Promise<ApiResponse<unknown>> {
+  return bffDelete<unknown>("/users/me");
 }
