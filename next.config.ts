@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  compiler: {
+    removeConsole: process.env.APP_ENV === "dev"
+     ? { exclude: ["error", "warn"] }
+     : false, 
+  }
 };
 
 export default withSentryConfig(nextConfig, {
