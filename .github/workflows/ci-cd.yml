@@ -148,14 +148,14 @@ jobs:
 
       - name: Prepare revision bundle (appspec/scripts + image info)
         run: |
-          cat > scripts/image.env <<EOF
+          cat > deploy/scripts/image.env <<EOF
           IMAGE_TAG=${IMAGE_TAG}
           ECR_REPO=${ECR_REPO}
           ECR_REGISTRY=${ECR_REGISTRY}
           EOF
-          chmod +x scripts/*.sh
+          chmod +x deploy/scripts/*.sh
 
-          zip -r deployment.zip appspec.yml scripts/ docker-compose.yml
+          zip -r deployment.zip deploy/scripts deploy/appspec.yml deploy/docker-compose.yml
 
       - name: Upload bundle to S3
         run: |
