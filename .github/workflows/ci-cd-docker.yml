@@ -95,6 +95,21 @@ jobs:
             echo "NEXT_PUBLIC_FIREBASE_APPID=${{ secrets.NEXT_PUBLIC_FIREBASE_APPID }}"
             echo "NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}"
             echo "APP_ENV=dev"
+          
+          
+            echo "LIGHTHOUSE_BASE_URL=${{ secrets.LIGHTHOUSE_BASE_URL }}"
+            echo "LIGHTHOUSE_TEST_USER_ID=${{ secrets.LIGHTHOUSE_TEST_USER_ID }}"
+            
+            echo "PERF_TEST_GROUP_ID=2"
+            echo "PERF_TEST_DINING_ID_AV=285564029410938880"
+            echo "PERF_TEST_DINING_ID_RV=285564029855535104"
+            echo "PERF_TEST_DINING_ID_CF=285564031210295296"
+            echo "PERF_TEST_LIGHTNING_ID_CHAT=1"
+            echo "PERF_TEST_LIGHTNING_ID_DETAIL=1"
+            
+            echo "GOOGLE_SHEETS_SPREADSHEET_ID=${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}"
+            echo "GOOGLE_SERVICE_ACCOUNT_KEY=${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}"
+            echo "GOOGLE_APPLICATION_CREDENTIALS=service-account.json"
           } > .env
 
       - name: Resolve environment
