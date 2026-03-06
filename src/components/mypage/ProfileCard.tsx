@@ -4,6 +4,7 @@ import { Avatar } from "@/src/components/ui/avatar";
 import { Badge } from "@/src/components/ui/badge";
 import { PROFILE_FALLBACK_IMAGE } from "@/src/constants/image";
 import { GENDER_LABEL, AGE_GROUP_LABEL } from "@/src/constants/user";
+import { getProfileImageUrl } from "@/src/lib/profile-image";
 import { LogOut } from "lucide-react";
 import { logout } from "@/src/lib/api/client/auth";
 import { useRouter } from "next/navigation";
@@ -15,13 +16,6 @@ interface ProfileCardProps {
   gender: string;
   ageGroup: string;
   imagePath: string | null;
-}
-
-function getProfileImageUrl(userId: string, imagePath: string | null): string | null {
-  if (!imagePath) return null;
-  const cdnUrl = process.env.NEXT_PUBLIC_S3_CDN;
-  if (!cdnUrl) return null;
-  return `https://${cdnUrl}/${imagePath}`;
 }
 
 export function ProfileCard({
