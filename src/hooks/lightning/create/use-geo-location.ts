@@ -15,11 +15,16 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
 
 export function useGeolocation() {
   const [permission, setPermission] = useState<LocationPermission>("unknown");
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(() => {
+    if (typeof navigator === "undefined") {
+      return true;
+    }
+
+    return "permissions" in navigator;
+  });
 
   useEffect(() => {
     if (!("permissions" in navigator)) {
-      setIsInitializing(false);
       return;
     }
 

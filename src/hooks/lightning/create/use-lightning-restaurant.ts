@@ -57,7 +57,9 @@ export function useLightningRestaurant() {
     if (hasRequestedLocationRef.current) return;
     if (!isInitializing && permission !== "denied" && coords === null) {
       hasRequestedLocationRef.current = true;
-      requestRestaurant();
+      queueMicrotask(() => {
+        void requestRestaurant();
+      });
     }
   }, [isInitializing, permission, coords, requestRestaurant]);
 
