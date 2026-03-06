@@ -51,13 +51,15 @@ export async function appendToSheet(rows: SheetRow[]): Promise<void> {
     getStatusByThresholds(metrics.cls, { goodMax: 0.1, needsImprovementMax: 0.25 }),
     metrics.tbt.toFixed(0),
     getStatusByThresholds(metrics.tbt, { goodMax: 200, needsImprovementMax: 600 }),
+    metrics.ttfb.toFixed(0),
+    getStatusByThresholds(metrics.ttfb, { goodMax: 800, needsImprovementMax: 1800 }),
     metrics.score.toFixed(1),
     getStatusByThresholds(metrics.score, { goodMin: 90, needsImprovementMin: 50 }),
   ]);
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: 'Sheet1!A:N',
+    range: 'Sheet1!A:P',
     valueInputOption: 'RAW',
     requestBody: { values },
   });

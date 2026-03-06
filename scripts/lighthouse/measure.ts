@@ -8,15 +8,17 @@ const AUDITS = [
   'largest-contentful-paint',
   'cumulative-layout-shift',
   'total-blocking-time',
+  'server-response-time',
 ];
 
-const RUNS = 5;
+const RUNS = 3;
 
 export interface LighthouseMetrics {
   fcp: number;
   lcp: number;
   cls: number;
   tbt: number;
+  ttfb: number;
   score: number;
 }
 
@@ -34,10 +36,15 @@ function getSettings(mode: LighthouseMode): Config['settings'] {
         screenEmulation: { mobile: true },
       } as const satisfies NonNullable<Config['settings']>;
 
-    case 'no-throttle':
+    case 'desktop':
       return {
-        throttlingMethod: 'provided',
-      } as const satisfies NonNullable<Config['settings']>;
+        throttlingMethod: 'simulate',
+        throttling: {
+          rttMs: 40,
+          throughputKbps: 10000,
+          cpuSlowdownMultiplier: 2,
+        }
+      }as const satisfies NonNullable<Config['settings']>;
 
     default:
       return {} as const satisfies NonNullable<Config['settings']>;
@@ -73,6 +80,7 @@ async function runOnce(url: string, cookieHeader: string, mode: LighthouseMode):
       lcp: numericValue('largest-contentful-paint'),
       cls: numericValue('cumulative-layout-shift'),
       tbt: numericValue('total-blocking-time'),
+      ttfb: numericValue('server-response-time'),
       score: (lhr.categories['performance']?.score ?? 0) * 100,
     };
   } finally {
@@ -95,7 +103,9 @@ export async function measurePage(
     process.stdout.write(`     run ${i + 1}/${RUNS} ... `);
     const m = await runOnce(url, cookieHeader, mode);
     runs.push(m);
-    console.log(`FCP ${m.fcp.toFixed(0)}ms, LCP ${m.lcp.toFixed(0)}ms, TBT ${m.tbt.toFixed(0)}ms, Score ${m.score.toFixed(0)}`);
+    console.log(
+      `FCP ${m.fcp.toFixed(0)}ms, LCP ${m.lcp.toFixed(0)}ms, TBT ${m.tbt.toFixed(0)}ms, TTFB ${m.ttfb.toFixed(0)}ms, Score ${m.score.toFixed(0)}`,
+    );
   }
 
   return {
@@ -103,6 +113,7 @@ export async function measurePage(
     lcp: avg(runs.map((r) => r.lcp)),
     cls: avg(runs.map((r) => r.cls)),
     tbt: avg(runs.map((r) => r.tbt)),
+    ttfb: avg(runs.map((r) => r.ttfb)),
     score: avg(runs.map((r) => r.score)),
   };
 }
