@@ -34,6 +34,7 @@ function normalizeSocketMessage(
     content: raw.content ?? "",
     createdAt: raw.createdAt ?? new Date().toISOString(),
     senderNickname: raw.senderNickname ?? "user",
+    senderImagePath: raw.senderImagePath ?? null,
     unreadCount: Number.isFinite(parsedUnreadCount)
       ? parsedUnreadCount
       : 0,

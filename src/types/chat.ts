@@ -10,6 +10,7 @@ export interface ChatBroadcastMessagePayload {
   content: string;
   createdAt: string;
   senderNickname: string | undefined;
+  senderImagePath?: string | null;
   unreadCount: number;
 }
 
@@ -45,6 +46,7 @@ export interface ChatBroadcastMessage {
   content: string;
   createdAt: string;
   senderNickname: string | undefined;
+  senderImagePath?: string | null;
   unreadCount: number;
 }
 
