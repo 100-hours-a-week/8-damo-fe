@@ -11,7 +11,7 @@ const AUDITS = [
   'server-response-time',
 ];
 
-const RUNS = 5;
+const RUNS = 3;
 
 export interface LighthouseMetrics {
   fcp: number;
@@ -36,10 +36,15 @@ function getSettings(mode: LighthouseMode): Config['settings'] {
         screenEmulation: { mobile: true },
       } as const satisfies NonNullable<Config['settings']>;
 
-    case 'no-throttle':
+    case 'desktop':
       return {
-        throttlingMethod: 'provided',
-      } as const satisfies NonNullable<Config['settings']>;
+        throttlingMethod: 'simulate',
+        throttling: {
+          rttMs: 40,
+          throughputKbps: 10000,
+          cpuSlowdownMultiplier: 2,
+        }
+      }as const satisfies NonNullable<Config['settings']>;
 
     default:
       return {} as const satisfies NonNullable<Config['settings']>;

@@ -9,6 +9,6 @@ export const PAGES = [
   { name: 'lightning_available', path: '/lightning?tab=available' },
 ] as const;
 
-export type LighthouseMode = 'mobile-slow4g' | 'desktop' | 'no-throttle';
+export type LighthouseMode = 'mobile-slow4g' | 'desktop';
 
-export const MODES: LighthouseMode[] = ['mobile-slow4g', 'desktop', 'no-throttle'];
+export const MODES: LighthouseMode[] = ['mobile-slow4g', 'desktop'];

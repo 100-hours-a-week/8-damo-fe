@@ -29,7 +29,7 @@ async function main() {
   const cookieHeader = await authenticate();
   console.log('   ✓ 인증 완료\n');
 
-  console.log('2. 페이지별 측정 중... (모드별 5회 평균)\n');
+  console.log('2. 페이지별 측정 중... (모드별 3회 평균)\n');
   const measuredAt = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' });
   const rows: SheetRow[] = [];
 
