@@ -26,8 +26,15 @@ import { useCreateLightning } from "@/src/hooks/lightning/create/use-create-ligh
 export function LightningCreateContainer() {
   const router = useRouter();
 
-  const { permission, restaurant, isLoadingRestaurant, requestRestaurant } =
-    useLightningRestaurant();
+  const {
+    permission,
+    isInitializing,
+    restaurant,
+    isLoadingRestaurant,
+    isTimedOut,
+    requestRestaurant,
+    retryRestaurant,
+  } = useLightningRestaurant();
 
   const {
     description,
@@ -94,12 +101,16 @@ export function LightningCreateContainer() {
       <div className="flex-1 space-y-4 px-4 pb-6 pt-4">
         <LocationPermissionGate
           permission={permission}
+          isInitializing={isInitializing}
           onRequestPermission={requestRestaurant}
         >
           {isLoadingRestaurant ? (
             <RecommendedRestaurantLoading />
           ) : (
-            <RecommendedRestaurantSection restaurant={restaurant} />
+            <RecommendedRestaurantSection
+              restaurant={restaurant}
+              onRetry={isTimedOut || !restaurant ? retryRestaurant : undefined}
+            />
           )}
 
           <LightningDescriptionInput
