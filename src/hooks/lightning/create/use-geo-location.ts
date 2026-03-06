@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export type LocationPermission = "unknown" | "granted" | "denied";
+export type LocationPermission = "unknown" | "prompt" | "granted" | "denied";
 
 function getCurrentPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
-      timeout: 10_000,
-      maximumAge: 300_000,
+      timeout: 600_000,
+      maximumAge: 10_000,
     });
   });
 }
@@ -23,7 +23,7 @@ export function useGeolocation() {
       return;
     }
 
-    let permissionStatus: PermissionStatus;
+    let permissionStatus: PermissionStatus | undefined;
 
     navigator.permissions.query({ name: "geolocation" }).then((status) => {
       permissionStatus = status;
@@ -32,6 +32,8 @@ export function useGeolocation() {
         setPermission("granted");
       } else if (status.state === "denied") {
         setPermission("denied");
+      } else {
+          setPermission("prompt");
       }
 
       setIsInitializing(false);
@@ -42,7 +44,7 @@ export function useGeolocation() {
         } else if (status.state === "denied") {
           setPermission("denied");
         } else {
-          setPermission("unknown");
+          setPermission("prompt");
         }
       };
     }).catch(() => {
@@ -71,7 +73,9 @@ export function useGeolocation() {
         latitude: pos.coords.latitude,
       };
     } catch (e) {
-      setPermission("denied");
+      if (e instanceof GeolocationPositionError && e.code === e.PERMISSION_DENIED) {
+        setPermission("denied");
+      }
       throw e;
     }
   }, []);
