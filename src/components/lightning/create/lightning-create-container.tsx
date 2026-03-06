@@ -10,6 +10,7 @@ import { LocationPermissionGate } from "./location-permission-gate";
 import { LightningCreateActionBar } from "./lightning-create-action-bar";
 import { LightningCapacityInput } from "./lightning-capacity-input";
 import { LightningDescriptionInput } from "./lightning-description-input";
+import { RecommendedRestaurantLoading } from "./recommended-restaurant-loading";
 import { RecommendedRestaurantSection } from "./recommended-restaurant-section";
 import {
   LightningDateTimeField,
@@ -95,7 +96,11 @@ export function LightningCreateContainer() {
           permission={permission}
           onRequestPermission={requestRestaurant}
         >
-          <RecommendedRestaurantSection restaurant={restaurant} />
+          {isLoadingRestaurant ? (
+            <RecommendedRestaurantLoading />
+          ) : (
+            <RecommendedRestaurantSection restaurant={restaurant} />
+          )}
 
           <LightningDescriptionInput
             value={description}
