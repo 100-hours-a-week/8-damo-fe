@@ -10,54 +10,76 @@ import { LocationPermissionGate } from "./location-permission-gate";
 import { LightningCreateActionBar } from "./lightning-create-action-bar";
 import { LightningCapacityInput } from "./lightning-capacity-input";
 import { LightningDescriptionInput } from "./lightning-description-input";
+import { RecommendedRestaurantLoading } from "./recommended-restaurant-loading";
 import { RecommendedRestaurantSection } from "./recommended-restaurant-section";
-import { LightningDateTimeField, type LightningCreateFormValues } from "./lightning-date-time-field";
+import {
+  LightningDateTimeField,
+  type LightningCreateFormValues,
+} from "./lightning-date-time-field";
 
-import { useLightningLocation } from "@/src/hooks/lightning/create/use-lightning-location";
+import { useLightningRestaurant } from "@/src/hooks/lightning/create/use-lightning-restaurant";
 import { useLightningDescription } from "@/src/hooks/lightning/create/use-lightning-description";
-import { useInvalidateLightning } from "@/src/hooks/lightning/use-invalidate-lightning";
 
-import { MOCK_RECOMMENDED_RESTAURANTS } from "../mock/mock-recommended-restaurant";
-import { createLightning } from "@/src/lib/api/client/lightning";
 import { formatDateToMinute } from "@/src/lib/utils";
+import { useCreateLightning } from "@/src/hooks/lightning/create/use-create-lightning";
 
 export function LightningCreateContainer() {
   const router = useRouter();
 
-  const { permission, requestPermission } = useLightningLocation();
+  const {
+    permission,
+    isInitializing,
+    restaurant,
+    isLoadingRestaurant,
+    isTimedOut,
+    requestRestaurant,
+    retryRestaurant,
+  } = useLightningRestaurant();
+
   const {
     description,
     descriptionCount,
     maxLength,
     setNormalizedDescription,
   } = useLightningDescription();
-  const { invalidateLightningList } = useInvalidateLightning();
+
+  const createMutation = useCreateLightning();
 
   const [maxParticipants, setMaxParticipants] = useState(2);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { control, handleSubmit: rhfHandleSubmit, formState: { isValid: isDateValid } } = useForm<LightningCreateFormValues>({
+  const {
+    control,
+    handleSubmit: rhfHandleSubmit,
+    formState: { isValid: isDateValid },
+  } = useForm<LightningCreateFormValues>({
     mode: "onChange",
   });
 
   const disabled = useMemo(() => {
-    return permission !== "granted" || description.length === 0 || !isDateValid;
-  }, [permission, description, isDateValid]);
+    return (
+      permission !== "granted" ||
+      description.length === 0 ||
+      !isDateValid ||
+      !restaurant
+    );
+  }, [permission, description, isDateValid, restaurant]);
+
+  const shouldBypassPermissionGate =
+    isInitializing || (permission !== "denied" && isLoadingRestaurant);
 
   const handleSubmit = rhfHandleSubmit(async (formData) => {
     if (disabled) return;
 
-    setIsSubmitting(true);
-
     try {
-      const response = await createLightning({
-        restaurantId: "285564029998141440",
+      await createMutation.mutateAsync({
+        restaurantId: restaurant?.id ?? "",
         maxParticipants,
         description,
         lightningDate: formatDateToMinute(formData.lightningDate),
       });
+
       toast.success("번개가 생성되었습니다.");
-      await invalidateLightningList();
+
       router.push("/lightning");
     } catch (error: unknown) {
       console.error(error);
@@ -66,12 +88,11 @@ export function LightningCreateContainer() {
         const message =
           error.response?.data?.errorMessage ??
           "번개 생성에 실패했습니다.";
+
         toast.error(message);
       } else {
         toast.error("번개 생성에 실패했습니다.");
       }
-    } finally {
-      setIsSubmitting(false);
     }
   });
 
@@ -83,9 +104,17 @@ export function LightningCreateContainer() {
       <div className="flex-1 space-y-4 px-4 pb-6 pt-4">
         <LocationPermissionGate
           permission={permission}
-          onRequestPermission={requestPermission}
+          isInitializing={shouldBypassPermissionGate}
+          onRequestPermission={requestRestaurant}
         >
-          <RecommendedRestaurantSection restaurant={MOCK_RECOMMENDED_RESTAURANTS[0]} />
+          {isLoadingRestaurant ? (
+            <RecommendedRestaurantLoading />
+          ) : (
+            <RecommendedRestaurantSection
+              restaurant={restaurant}
+              onRetry={isTimedOut || !restaurant ? retryRestaurant : undefined}
+            />
+          )}
 
           <LightningDescriptionInput
             value={description}
@@ -94,10 +123,7 @@ export function LightningCreateContainer() {
             onChange={setNormalizedDescription}
           />
 
-          <LightningDateTimeField
-            name="lightningDate"
-            control={control}
-          />
+          <LightningDateTimeField name="lightningDate" control={control} />
 
           <LightningCapacityInput
             value={maxParticipants}
@@ -106,7 +132,10 @@ export function LightningCreateContainer() {
         </LocationPermissionGate>
       </div>
 
-      <LightningCreateActionBar disabled={disabled} isSubmitting={isSubmitting} />
+      <LightningCreateActionBar
+        disabled={disabled}
+        isSubmitting={createMutation.isPending}
+      />
     </form>
   );
 }

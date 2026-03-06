@@ -1,10 +1,11 @@
 "use client";
 
 import { Fragment } from "react";
+import { Avatar } from "@/src/components/ui/avatar";
+import { PROFILE_FALLBACK_IMAGE } from "@/src/constants/image";
+import { getProfileImageUrl } from "@/src/lib/profile-image";
 import type { ChatBroadcastMessage } from "@/src/types/chat";
 import { ChatUnreadDivider } from "./chat-unread-divider";
-
-const avatarDemo = "🤍";
 
 function formatChatTime(createdAt: string): string {
   const parsed = new Date(createdAt);
@@ -33,6 +34,9 @@ export function ChatMessageItem({
   const isMine = message.senderId === currentUserId;
   const timeText = formatChatTime(message.createdAt);
   const senderLabel = isMine ? "나" : message.senderNickname;
+  const senderImageUrl = isMine
+    ? null
+    : getProfileImageUrl(message.senderId, message.senderImagePath ?? null);
   const unreadCount = message.unreadCount ?? 0;
   const shouldShowUnreadCount =
     Number.isFinite(unreadCount) && unreadCount > 0;
@@ -46,9 +50,15 @@ export function ChatMessageItem({
         className={isMine ? "flex justify-end" : "flex items-start gap-2"}
       >
         {!isMine && (
-          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-primary to-[#ff6b28] text-sm text-primary-foreground">
-            {avatarDemo}
-          </div>
+          <Avatar
+            src={senderImageUrl}
+            alt={senderLabel ?? "사용자"}
+            fallbackText={senderLabel ?? "사용자"}
+            fallbackUrl={PROFILE_FALLBACK_IMAGE}
+            size="sm"
+            showBorder={false}
+            className="mt-0.5"
+          />
         )}
 
         <div className="max-w-[78%] min-w-0 space-y-1">

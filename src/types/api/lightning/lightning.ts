@@ -13,6 +13,14 @@ export interface LightningDetailParticipantResponse {
   role: string;
 }
 
+export interface LightningRecommendationResponse {
+  restaurantId: string;
+  restaurantName: string;
+  x: string;
+  y: string;
+  phoneNumber: string;
+}
+
 export interface LightningDetailResponse {
   lightningId: string;
   restaurantName: string;

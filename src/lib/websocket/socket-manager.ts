@@ -356,5 +356,5 @@ export class SocketManager {
 export const socketManager = new SocketManager({
   brokerURL: process.env.NEXT_PUBLIC_BROKER_URL ?? undefined,
   reconnectDelay: 5000,
-  debug: true,
+  debug: process.env.NEXT_PUBLIC_ENV !== "prod",
 });

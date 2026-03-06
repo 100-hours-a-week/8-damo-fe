@@ -11,8 +11,23 @@ import type {
 import type {
   CreateLightningRequest,
   LightningDetailResponse,
+  LightningRecommendationResponse,
 } from "@/src/types/api/lightning/lightning";
+import type { Restaurant } from "@/src/types/lightning";
 import { bffGet, bffPost, bffDelete, type ApiResponse } from "./index";
+
+function mapRecommendation(raw: LightningRecommendationResponse): Restaurant {
+  return {
+    id: raw.restaurantId,
+    name: raw.restaurantName,
+    description: "",
+    phoneNumber: raw.phoneNumber,
+    location: {
+      lat: Number(raw.y),
+      lng: Number(raw.x),
+    },
+  };
+}
 
 function mapLightningDetail(raw: LightningDetailResponse): LightningDetail {
   return {
@@ -58,6 +73,7 @@ function mapChatMessage(dto: ChatMessagePageRaw["messages"][number]): ChatBroadc
     messageId: String(dto.messageId),
     senderId: String(dto.senderId),
     senderNickname: dto.senderNickname,
+    senderImagePath: dto.senderImagePath ?? null,
     lightningId: String(dto.lightningId),
     chatType: dto.chatType,
     content: dto.content,
@@ -149,6 +165,21 @@ export async function getLightningDetail(
   return {
     ...response,
     data: mapLightningDetail(response.data),
+  };
+}
+
+export async function getLightningRecommendation(
+  x: string,
+  y: string,
+  config?: import("axios").AxiosRequestConfig
+): Promise<ApiResponse<Restaurant>> {
+  const response = await bffGet<LightningRecommendationResponse>(
+    "/lightning/recommendation",
+    { params: { x, y }, ...config }
+  );
+  return {
+    ...response,
+    data: mapRecommendation(response.data),
   };
 }
 

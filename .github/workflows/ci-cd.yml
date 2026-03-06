@@ -13,7 +13,7 @@ env:
   REMOTE_DIR: /home/ubuntu/opt/fe-prod
   ARTIFACT_FILE: next-build.tar.gz
   AWS_REGION: ap-northeast-2
-  
+
   DEPLOYMENT_APP: damo-fe
   DEPLOYMENT_GROUP_PROD: prod-damo-fe
 
@@ -83,7 +83,7 @@ jobs:
             echo "NEXT_PUBLIC_URL=${{ secrets.NEXT_PUBLIC_URL }}"
             echo "NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY }}"
             echo "NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}"
-            echo "NEXT_PUBLIC_BROKER_URL=${{ secrets.NEXT_PUBLIC_BROKER_URL_PROD }}"
+            echo "NEXT_PUBLIC_BROKER_URL=${{ secrets.NEXT_PUBLIC_BROKER_URL_DEV }}"
             echo "NEXT_PUBLIC_RECEIPT_WASM=${{ secrets.NEXT_PUBLIC_RECEIPT_WASM }}"
             echo "NEXT_PUBLIC_RECEIPT_MODEL=${{ secrets.NEXT_PUBLIC_RECEIPT_MODEL }}"
             echo "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}"
@@ -94,7 +94,7 @@ jobs:
             echo "NEXT_PUBLIC_FIREBASE_APPID=${{ secrets.NEXT_PUBLIC_FIREBASE_APPID }}"
             echo "NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}"
             echo "APP_ENV=prod"
-          } > .env
+           } > .env
 
       - name: Resolve environment
         env:
@@ -156,6 +156,7 @@ jobs:
           EOF
           chmod +x deploy/scripts/*.sh
 
+          zip -r deployment.zip deploy/scripts deploy/appspec.yml deploy/docker-compose.yml
           cd deploy && zip -r ../deployment.zip scripts appspec.yml docker-compose.yml
 
       - name: Upload bundle to S3
@@ -260,4 +261,3 @@ jobs:
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"username\":\"Frontend CI/CD\",\"content\":\"🖥️ Frontend CI/CD 결과\\n- CI: **${CI_RESULT}**\\n- Deploy-PROD: **${DEPLOY_RESULT}**\\n- K6: **${K6_RESULT}**\\n🔗 [${REF}](${RUN_URL})\"}" \
-               ${{ secrets.DISCORD_WEBHOOK_URL }}
