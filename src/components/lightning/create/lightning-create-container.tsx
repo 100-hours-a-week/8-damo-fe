@@ -64,6 +64,9 @@ export function LightningCreateContainer() {
     );
   }, [permission, description, isDateValid, restaurant]);
 
+  const shouldBypassPermissionGate =
+    isInitializing || (permission !== "denied" && isLoadingRestaurant);
+
   const handleSubmit = rhfHandleSubmit(async (formData) => {
     if (disabled) return;
 
@@ -101,7 +104,7 @@ export function LightningCreateContainer() {
       <div className="flex-1 space-y-4 px-4 pb-6 pt-4">
         <LocationPermissionGate
           permission={permission}
-          isInitializing={isInitializing}
+          isInitializing={shouldBypassPermissionGate}
           onRequestPermission={requestRestaurant}
         >
           {isLoadingRestaurant ? (
