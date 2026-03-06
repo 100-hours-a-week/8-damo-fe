@@ -26,8 +26,15 @@ import { useCreateLightning } from "@/src/hooks/lightning/create/use-create-ligh
 export function LightningCreateContainer() {
   const router = useRouter();
 
-  const { permission, restaurant, isLoadingRestaurant, requestRestaurant } =
-    useLightningRestaurant();
+  const {
+    permission,
+    isInitializing,
+    restaurant,
+    isLoadingRestaurant,
+    isTimedOut,
+    requestRestaurant,
+    retryRestaurant,
+  } = useLightningRestaurant();
 
   const {
     description,
@@ -56,6 +63,9 @@ export function LightningCreateContainer() {
       !restaurant
     );
   }, [permission, description, isDateValid, restaurant]);
+
+  const shouldBypassPermissionGate =
+    isInitializing || (permission !== "denied" && isLoadingRestaurant);
 
   const handleSubmit = rhfHandleSubmit(async (formData) => {
     if (disabled) return;
@@ -94,12 +104,16 @@ export function LightningCreateContainer() {
       <div className="flex-1 space-y-4 px-4 pb-6 pt-4">
         <LocationPermissionGate
           permission={permission}
+          isInitializing={shouldBypassPermissionGate}
           onRequestPermission={requestRestaurant}
         >
           {isLoadingRestaurant ? (
             <RecommendedRestaurantLoading />
           ) : (
-            <RecommendedRestaurantSection restaurant={restaurant} />
+            <RecommendedRestaurantSection
+              restaurant={restaurant}
+              onRetry={isTimedOut || !restaurant ? retryRestaurant : undefined}
+            />
           )}
 
           <LightningDescriptionInput
