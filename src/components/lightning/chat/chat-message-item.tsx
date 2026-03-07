@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useLayoutEffect } from "react";
+import { Fragment, memo, useLayoutEffect } from "react";
 import { Avatar } from "@/src/components/ui/avatar";
 import { PROFILE_FALLBACK_IMAGE } from "@/src/constants/image";
 import { getProfileImageUrl } from "@/src/lib/profile-image";
@@ -25,7 +25,7 @@ interface Props {
   showDividerAfter: boolean;
 }
 
-export function ChatMessageItem({
+export const ChatMessageItem = memo(function ChatMessageItem({
   message,
   currentUserId,
   showDividerBefore,
@@ -129,4 +129,4 @@ export function ChatMessageItem({
       {showDividerAfter && <ChatUnreadDivider />}
     </Fragment>
   );
-}
+});
