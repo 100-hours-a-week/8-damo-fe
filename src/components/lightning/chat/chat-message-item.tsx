@@ -32,6 +32,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   showDividerAfter,
 }: Props) {
   useLayoutEffect(() => {
+    if (process.env.NEXT_PUBLIC_APP_ENV === "dev") return;
     performance.mark(`chat:rendered:${message.messageId}`);
     try {
       performance.measure(
@@ -40,7 +41,6 @@ export const ChatMessageItem = memo(function ChatMessageItem({
         `chat:rendered:${message.messageId}`,
       );
     } catch {
-      // ws-received mark가 없는 기존 메시지는 조용히 무시
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // perf
