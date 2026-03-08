@@ -261,3 +261,4 @@ jobs:
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"username\":\"Frontend CI/CD\",\"content\":\"🖥️ Frontend CI/CD 결과\\n- CI: **${CI_RESULT}**\\n- Deploy-PROD: **${DEPLOY_RESULT}**\\n- K6: **${K6_RESULT}**\\n🔗 [${REF}](${RUN_URL})\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
