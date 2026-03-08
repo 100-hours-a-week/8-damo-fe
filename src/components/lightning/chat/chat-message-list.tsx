@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import type { ChatBroadcastMessage } from "@/src/types/chat";
 import type {
@@ -128,8 +128,9 @@ export function ChatMessageList({
   }, [bottomInView, hasPendingIncomingMessage]);
 
   const showDivider = readBoundary?.showDivider === true;
-  const loadedMessageIds = new Set(
-    messages.map((message) => Number(message.messageId))
+  const loadedMessageIds = useMemo(
+    () => new Set(messages.map((message) => Number(message.messageId))),
+    [messages]
   );
   const lastReadMessageId = showDivider
     ? readBoundary?.lastReadMessageId ?? null

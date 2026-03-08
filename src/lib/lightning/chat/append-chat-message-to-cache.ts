@@ -1,6 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { ChatBroadcastMessage } from "@/src/types/chat";
-import { dedupeAndSortById } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
 import { getLightningChatMessagesQueryKey } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
 import type { ChatInfiniteData } from "@/src/types/lightning-chat";
 
@@ -33,13 +32,13 @@ export function appendChatMessageToCache(
       const pagesCopy = [...old.pages];
       const lastIndex = pagesCopy.length - 1;
       const lastPage = pagesCopy[lastIndex];
+      const msgs = lastPage.messages;
+      const existingIds = new Set(msgs.map((m) => String(m.messageId)));
+      if (existingIds.has(String(incomingMessage.messageId))) return old;
 
       pagesCopy[lastIndex] = {
         ...lastPage,
-        messages: dedupeAndSortById([
-          ...lastPage.messages,
-          incomingMessage,
-        ]),
+        messages: [...msgs, incomingMessage],
       };
 
       return {

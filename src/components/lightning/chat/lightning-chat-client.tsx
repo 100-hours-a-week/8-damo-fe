@@ -37,6 +37,7 @@ export function LightningChatClient({
   const [isLeaving, setIsLeaving] = useState(false);
   const currentUserId = useUserStore((state) => state.user?.userId ?? null);
   const { invalidateLightningList } = useInvalidateLightning();
+  const isDevEnv = process.env.NEXT_PUBLIC_APP_ENV === "dev";
 
   const handleBack = () => {
     router.push("/lightning?tab=joined");
@@ -89,13 +90,15 @@ export function LightningChatClient({
       : null;
   const lastChatMessageId =
     realtimeChatMessageId ?? initialLastReadMessageId;
-  console.log(process.env.NEXT_PUBLIC_APP_ENV);
+
   // Scenario 2: 버스트 메시지 (10개 / 1초) 시뮬레이션
   const simulateBurst = useCallback((count = 10) => {
     Array.from({ length: count }).forEach((_, i) => {
       setTimeout(() => {
         const fakeId = `burst-${Date.now()}-${i}`;
-        performance.mark(`chat:ws-received:${fakeId}`);
+        if (process.env.NEXT_PUBLIC_APP_ENV !== "prod") {
+          performance.mark(`chat:ws-received:${fakeId}`);
+        }
         appendChatMessageToCache(queryClient, lightningId, {
           messageId: fakeId,
           senderId: "9999",
@@ -206,12 +209,12 @@ export function LightningChatClient({
         </p>
       )}
 
-      <button
+      {isDevEnv && (<button
         onClick={() => simulateBurst(10)}
         className="mx-4 mb-1 rounded bg-yellow-200 px-3 py-1 text-xs text-yellow-900"
       >
         [DEV - perf] 시나리오 2: 버스트 10개 전송
-      </button>
+      </button>)}
 
       <ChatInput onSend={sendMessage}/>
     </div>

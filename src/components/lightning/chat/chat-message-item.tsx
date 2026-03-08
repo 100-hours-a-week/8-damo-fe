@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useLayoutEffect } from "react";
+import { Fragment, memo, useLayoutEffect } from "react";
 import { Avatar } from "@/src/components/ui/avatar";
 import { PROFILE_FALLBACK_IMAGE } from "@/src/constants/image";
 import { getProfileImageUrl } from "@/src/lib/profile-image";
@@ -25,13 +25,14 @@ interface Props {
   showDividerAfter: boolean;
 }
 
-export function ChatMessageItem({
+export const ChatMessageItem = memo(function ChatMessageItem({
   message,
   currentUserId,
   showDividerBefore,
   showDividerAfter,
 }: Props) {
   useLayoutEffect(() => {
+    if (process.env.NEXT_PUBLIC_APP_ENV === "prod") return;
     performance.mark(`chat:rendered:${message.messageId}`);
     try {
       performance.measure(
@@ -40,7 +41,6 @@ export function ChatMessageItem({
         `chat:rendered:${message.messageId}`,
       );
     } catch {
-      // ws-received mark가 없는 기존 메시지는 조용히 무시
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // perf
@@ -129,4 +129,4 @@ export function ChatMessageItem({
       {showDividerAfter && <ChatUnreadDivider />}
     </Fragment>
   );
-}
+});
