@@ -95,7 +95,7 @@ export function LightningChatClient({
     Array.from({ length: count }).forEach((_, i) => {
       setTimeout(() => {
         const fakeId = `burst-${Date.now()}-${i}`;
-        if (process.env.NEXT_PUBLIC_APP_ENV !== "dev") {
+        if (process.env.NEXT_PUBLIC_APP_ENV !== "prod") {
           performance.mark(`chat:ws-received:${fakeId}`);
         }
         appendChatMessageToCache(queryClient, lightningId, {

@@ -32,7 +32,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   showDividerAfter,
 }: Props) {
   useLayoutEffect(() => {
-    if (process.env.NEXT_PUBLIC_APP_ENV === "dev") return;
+    if (process.env.NEXT_PUBLIC_APP_ENV === "prod") return;
     performance.mark(`chat:rendered:${message.messageId}`);
     try {
       performance.measure(
