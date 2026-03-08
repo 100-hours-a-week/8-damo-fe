@@ -95,6 +95,7 @@ jobs:
             echo "NEXT_PUBLIC_FIREBASE_APPID=${{ secrets.NEXT_PUBLIC_FIREBASE_APPID }}"
             echo "NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}"
             echo "APP_ENV=dev"
+            echo "NEXT_PUBLIC_APP_ENV=dev"
           
           
             echo "LIGHTHOUSE_BASE_URL=${{ secrets.LIGHTHOUSE_BASE_URL }}"
