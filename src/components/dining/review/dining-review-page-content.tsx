@@ -44,7 +44,7 @@ export function DiningReviewPageContent({
 }: DiningReviewPageContentProps) {
   return (
     <div className="mx-auto flex min-h-dvh w-full min-w-[320px] max-w-[430px] flex-col bg-white">
-      <Header title="리뷰하기" className="border-b border-[#f3f4f6] bg-white" />
+      <Header title="리뷰하기" className="border-b border-[#f3f4f6] bg-white" backPath={`/groups/${groupId}/dining/${diningId}`} />
 
       <DiningReviewForm groupId={groupId} diningId={diningId}>
         <div className="flex-1 overflow-y-auto px-6 pb-24">
