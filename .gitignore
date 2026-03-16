@@ -67,4 +67,5 @@ tests/pref/results/
 server.mjs
 
 public/firebase-messaging-sw.js
+public/sw.js
 service-account.json
