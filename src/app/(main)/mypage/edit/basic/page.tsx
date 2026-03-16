@@ -16,7 +16,7 @@ export default function EditBasicPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header title="기본 정보 수정" />
+      <Header title="기본 정보 수정" backPath="/mypage" />
       <EditBasicContainer initialData={initialData} />
     </div>
   );

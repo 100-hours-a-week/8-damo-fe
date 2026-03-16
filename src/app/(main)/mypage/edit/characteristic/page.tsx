@@ -18,7 +18,7 @@ export default async function EditCharacteristicPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header title="개인 특성 수정" />
+      <Header title="개인 특성 수정" backPath="/mypage" />
       <EditCharacteristicContainer initialData={initialData} />
     </div>
   );
