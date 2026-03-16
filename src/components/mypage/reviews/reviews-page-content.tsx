@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import { AlertTriangle, MessageSquareText } from "lucide-react";
 import { Header } from "@/src/components/layout";
 import { EmptyState } from "@/src/components/ui/empty-state";
 import type { ReviewSummary } from "@/src/types/reviews";
 import { ReviewListItem } from "./review-list-item";
+import { ReviewDetailDialog } from "./review-detail-dialog";
 
 interface ReviewsPageContentProps {
   reviews: ReviewSummary[];
@@ -13,6 +17,8 @@ export function ReviewsPageContent({
   reviews,
   errorMessage,
 }: ReviewsPageContentProps) {
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
+
   return (
     <div className="mx-auto flex min-h-dvh w-full min-w-[320px] max-w-[430px] flex-col bg-[#f9fafb]">
       <Header title="리뷰 관리" className="border-b border-[#e5e7eb] bg-white" />
@@ -34,11 +40,22 @@ export function ReviewsPageContent({
         ) : (
           <section className="flex flex-col gap-3">
             {reviews.map((review) => (
-              <ReviewListItem key={review.reviewId} review={review} />
+              <ReviewListItem
+                key={review.reviewId}
+                review={review}
+                onSelect={setSelectedReviewId}
+              />
             ))}
           </section>
         )}
       </main>
+
+      <ReviewDetailDialog
+        reviewId={selectedReviewId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedReviewId(null);
+        }}
+      />
     </div>
   );
 }

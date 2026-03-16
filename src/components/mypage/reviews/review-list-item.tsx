@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Star } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import type { ReviewSummary } from "@/src/types/reviews";
@@ -29,9 +28,10 @@ function formatStarRating(starRating: number): string {
 
 interface ReviewListItemProps {
   review: ReviewSummary;
+  onSelect: (reviewId: string) => void;
 }
 
-export function ReviewListItem({ review }: ReviewListItemProps) {
+export function ReviewListItem({ review, onSelect }: ReviewListItemProps) {
   const visibleSatisfactions = review.satisfactions.slice(
     0,
     MAX_VISIBLE_SATISFACTIONS
@@ -42,9 +42,10 @@ export function ReviewListItem({ review }: ReviewListItemProps) {
   );
 
   return (
-    <Link
-      href={`/mypage/review/${review.reviewId}`}
-      className="block rounded-2xl bg-white p-4 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.1)] transition-colors active:bg-[#f9fafb]"
+    <button
+      type="button"
+      onClick={() => onSelect(review.reviewId)}
+      className="block w-full rounded-2xl bg-white p-4 text-left shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.1)] transition-colors active:bg-[#f9fafb]"
       aria-label={`${review.restaurantName} 리뷰 상세 보기`}
     >
       <article className="flex flex-col gap-3">
@@ -83,6 +84,6 @@ export function ReviewListItem({ review }: ReviewListItemProps) {
           )}
         </div>
       </article>
-    </Link>
+    </button>
   );
 }
