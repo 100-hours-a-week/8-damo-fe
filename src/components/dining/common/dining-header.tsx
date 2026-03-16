@@ -7,17 +7,20 @@ interface DiningHeaderProps {
   diningDate: string;
   diningStatus: DiningStatus;
   onBack?: () => void;
+  backPath?: string;
 }
 
 export function DiningHeader({
   diningDate,
   diningStatus,
   onBack,
+  backPath,
 }: DiningHeaderProps) {
   return (
     <Header
       title={<DiningDate date={diningDate} />}
       onBack={onBack}
+      backPath={backPath}
       rightElement={<DiningStatusBadge status={diningStatus} />}
     />
   );

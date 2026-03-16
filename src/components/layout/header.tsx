@@ -7,6 +7,7 @@ import { HeaderBackButtonClient } from "./header-back-button-client";
 interface HeaderProps {
   title?: React.ReactNode;
   onBack?: () => void;
+  backPath?: string;
   showBackButton?: boolean;
   showMoreButton?: boolean;
   showAlarmButton?: boolean;
@@ -18,6 +19,7 @@ interface HeaderProps {
 export function Header({
   title,
   onBack,
+  backPath,
   showBackButton = true,
   showMoreButton = false,
   showAlarmButton = false,
@@ -47,7 +49,7 @@ export function Header({
               <ArrowLeft className="size-6 text-[#8e8e93]" />
             </Button>
           ) : (
-            <HeaderBackButtonClient />
+            <HeaderBackButtonClient backPath={backPath} />
           )
         ) : (
           <div className="size-9 sm:size-10" />

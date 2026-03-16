@@ -14,6 +14,7 @@ export function LightningDetailHeader({
     <Header
       title="모임 정보"
       showBackButton={true}
+      backPath="/lightning"
       className="bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75"
       rightElement={
         <Badge

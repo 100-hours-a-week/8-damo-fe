@@ -46,6 +46,7 @@ export default async function DiningDetailPage({
       diningStatus={diningCommon.diningStatus}
       diningParticipants={diningCommon.diningParticipants}
       isGroupLeader={diningCommon.isGroupLeader}
+      backPath={`/groups/${groupId}`}
     >
       {errorMessages.length > 0 && (
         <DiningErrorToast messages={errorMessages} />
