@@ -1,6 +1,5 @@
 import "server-only";
 import { serverGet } from "./index";
-import type { ApiResponse } from "@/src/types/api/common";
 import type { ReviewDetail, ReviewSatisfaction, ReviewSummary } from "@/src/types/reviews";
 
 interface ReviewSatisfactionRaw {
@@ -55,25 +54,25 @@ function mapReviewDetail(raw: ReviewDetailRaw): ReviewDetail {
 }
 
 export async function getMyReviews(): Promise<ReviewSummary[]> {
-  const payload = await serverGet<ApiResponse<ReviewSummaryRaw[] | null>>(
+  const data = await serverGet<ReviewSummaryRaw[] | null>(
     "/api/v1/users/me/reviews"
   );
 
-  if (!Array.isArray(payload.data)) {
+  if (!Array.isArray(data)) {
     return [];
   }
 
-  return payload.data.map(mapReviewSummary);
+  return data.map(mapReviewSummary);
 }
 
 export async function getMyReview(reviewId: string): Promise<ReviewDetail | null> {
-  const payload = await serverGet<ApiResponse<ReviewDetailRaw | null>>(
+  const data = await serverGet<ReviewDetailRaw | null>(
     `/api/v1/users/me/reviews/${encodeURIComponent(reviewId)}`
   );
 
-  if (!payload.data) {
+  if (!data) {
     return null;
   }
 
-  return mapReviewDetail(payload.data);
+  return mapReviewDetail(data);
 }
