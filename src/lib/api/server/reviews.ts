@@ -1,16 +1,15 @@
 import "server-only";
 import { serverGet } from "./index";
-import type { ApiResponse } from "@/src/types/api/common";
 import type { ReviewDetail, ReviewSatisfaction, ReviewSummary } from "@/src/types/reviews";
 
 interface ReviewSatisfactionRaw {
-  id: number;
+  id: string;
   category: string;
 }
 
 interface ReviewSummaryRaw {
-  reviewId: number;
-  diningId: number;
+  reviewId: string;
+  diningId: string;
   groupName: string;
   restaurantName: string;
   starRating: number;
@@ -30,15 +29,15 @@ function mapSatisfactions(
   }
 
   return satisfactions.map((item) => ({
-    id: Number(item.id),
+    id: item.id,
     category: item.category ?? "",
   }));
 }
 
 function mapReviewSummary(raw: ReviewSummaryRaw): ReviewSummary {
   return {
-    reviewId: Number(raw.reviewId),
-    diningId: Number(raw.diningId),
+    reviewId: raw.reviewId,
+    diningId: raw.diningId,
     groupName: raw.groupName ?? "",
     restaurantName: raw.restaurantName ?? "",
     starRating: Number(raw.starRating),
@@ -55,25 +54,25 @@ function mapReviewDetail(raw: ReviewDetailRaw): ReviewDetail {
 }
 
 export async function getMyReviews(): Promise<ReviewSummary[]> {
-  const payload = await serverGet<ApiResponse<ReviewSummaryRaw[] | null>>(
+  const data = await serverGet<ReviewSummaryRaw[] | null>(
     "/api/v1/users/me/reviews"
   );
 
-  if (!Array.isArray(payload.data)) {
+  if (!Array.isArray(data)) {
     return [];
   }
 
-  return payload.data.map(mapReviewSummary);
+  return data.map(mapReviewSummary);
 }
 
 export async function getMyReview(reviewId: string): Promise<ReviewDetail | null> {
-  const payload = await serverGet<ApiResponse<ReviewDetailRaw | null>>(
+  const data = await serverGet<ReviewDetailRaw | null>(
     `/api/v1/users/me/reviews/${encodeURIComponent(reviewId)}`
   );
 
-  if (!payload.data) {
+  if (!data) {
     return null;
   }
 
-  return mapReviewDetail(payload.data);
+  return mapReviewDetail(data);
 }
