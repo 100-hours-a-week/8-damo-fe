@@ -70,12 +70,14 @@ export function ReviewDetailContent({
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#f9fafb] p-4">
-          <p className="whitespace-pre-wrap break-words text-sm leading-[22.75px] tracking-[-0.1504px] text-[#364153]">
-            {review.content}
-          </p>
-        </div>
-
+        {review.content && (
+          <div className="rounded-2xl bg-[#f9fafb] p-4">
+            <p className="whitespace-pre-wrap break-words text-sm leading-[22.75px] tracking-[-0.1504px] text-[#364153]">
+              {review.content}
+            </p>
+          </div>
+        )}
+        
         <div className="flex items-center justify-center gap-2">
           {Array.from({ length: 5 }).map((_, index) => (
             <Star
