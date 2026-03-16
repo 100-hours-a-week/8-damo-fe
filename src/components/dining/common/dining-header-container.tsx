@@ -5,18 +5,21 @@ interface DiningHeaderContainerProps {
   diningDate: string;
   diningStatus: DiningStatus;
   onBack?: () => void;
+  backPath?: string;
 }
 
 export function DiningHeaderContainer({
   diningDate,
   diningStatus,
   onBack,
+  backPath,
 }: DiningHeaderContainerProps) {
   return (
     <DiningHeader
       diningDate={diningDate}
       diningStatus={diningStatus}
       onBack={onBack}
+      backPath={backPath}
     />
   );
 }
