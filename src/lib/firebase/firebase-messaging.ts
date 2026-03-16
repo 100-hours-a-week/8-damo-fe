@@ -51,11 +51,11 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
     swRegistrationPromise = (async () => {
       await waitForWindowLoad()
       try {
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        const registration = await navigator.serviceWorker.register('/sw.js')
         return registration
       } catch (error) {
         console.error('Service Worker 등록 실패:', error)
-        const existing = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+        const existing = await navigator.serviceWorker.getRegistration('/sw.js')
         return existing ?? null
       }
     })()

@@ -1,9 +1,16 @@
 import type { NextConfig } from 'next';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import { withSentryConfig } from '@sentry/nextjs';
+import withSerwistInit from '@serwist/next';
 
 const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
+});
+
+const withSerwist = withSerwistInit({
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
+  disable: process.env.NODE_ENV !== 'production',
 });
 
 const nextConfig: NextConfig = {
@@ -38,4 +45,4 @@ const sentryWrappedConfig = withSentryConfig(nextConfig, {
   },
 });
 
-export default bundleAnalyzer(sentryWrappedConfig);
+export default withSerwist(bundleAnalyzer(sentryWrappedConfig));
