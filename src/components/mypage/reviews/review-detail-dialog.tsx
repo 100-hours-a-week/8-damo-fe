@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
-import { Dialog, DialogContent } from "@/src/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/src/components/ui/dialog";
 import { Button } from "@/src/components/ui/button";
 import { useMyReview } from "@/src/hooks/reviews/use-my-review";
 import { ReviewDetailContent } from "./review-detail-page-content";
@@ -27,6 +27,7 @@ export function ReviewDetailDialog({
         showCloseButton={false}
         className="max-w-[calc(100%-2rem)] sm:max-w-[360px] rounded-3xl p-0"
       >
+        <DialogTitle className="sr-only">리뷰 상세 내용</DialogTitle>
         {isLoading && (
           <div className="space-y-0">
             <div className="flex items-center justify-between border-b border-[#f3f4f6] px-6 py-5">
