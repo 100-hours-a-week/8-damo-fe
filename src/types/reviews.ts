@@ -1,11 +1,11 @@
 export interface ReviewSatisfaction {
-  id: number;
+  id: string;
   category: string;
 }
 
 export interface ReviewSummary {
-  reviewId: number;
-  diningId: number;
+  reviewId: string;
+  diningId: string;
   groupName: string;
   restaurantName: string;
   starRating: number;

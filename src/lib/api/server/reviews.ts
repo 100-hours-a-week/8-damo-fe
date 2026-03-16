@@ -4,13 +4,13 @@ import type { ApiResponse } from "@/src/types/api/common";
 import type { ReviewDetail, ReviewSatisfaction, ReviewSummary } from "@/src/types/reviews";
 
 interface ReviewSatisfactionRaw {
-  id: number;
+  id: string;
   category: string;
 }
 
 interface ReviewSummaryRaw {
-  reviewId: number;
-  diningId: number;
+  reviewId: string;
+  diningId: string;
   groupName: string;
   restaurantName: string;
   starRating: number;
@@ -30,15 +30,15 @@ function mapSatisfactions(
   }
 
   return satisfactions.map((item) => ({
-    id: Number(item.id),
+    id: item.id,
     category: item.category ?? "",
   }));
 }
 
 function mapReviewSummary(raw: ReviewSummaryRaw): ReviewSummary {
   return {
-    reviewId: Number(raw.reviewId),
-    diningId: Number(raw.diningId),
+    reviewId: raw.reviewId,
+    diningId: raw.diningId,
     groupName: raw.groupName ?? "",
     restaurantName: raw.restaurantName ?? "",
     starRating: Number(raw.starRating),
