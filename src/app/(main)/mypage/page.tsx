@@ -120,7 +120,7 @@ export default function MyPage() {
             </span>
             <ChevronRight className="size-6 text-muted-foreground" />
           </button>
-          <MenuItem href="#" label="리뷰 관리" />
+          <MenuItem href="/mypage/reviews" label="리뷰 관리" />
         </nav>
       </main>
       <BottomNavigationBar />
