@@ -28,7 +28,7 @@ export default async function DiningReceiptPage({
   }
 
   return (
-    <ReceiptLayout>
+    <ReceiptLayout backPath={`/groups/${groupId}/dining/${diningId}`}>
       <ReceiptInteraction
         groupId={groupId}
         diningId={diningId}
