@@ -67,7 +67,20 @@ export async function middleware(request: NextRequest) {
             .map((s) => parseCookie(s.trim()))
             .filter((c): c is NonNullable<typeof c> => c !== null);
 
-          const response = NextResponse.next();
+          const requestHeaders = new Headers(request.headers);
+          const nextAccessToken =
+            parsedCookies.find((cookie) => cookie.name === "access_token")
+              ?.value ?? null;
+
+          if (nextAccessToken) {
+            requestHeaders.set("access_token", nextAccessToken);
+          }
+
+          const response = NextResponse.next({
+            request: {
+              headers: requestHeaders,
+            },
+          });
 
           for (const cookie of parsedCookies) {
             response.cookies.set(cookie.name, cookie.value, cookie.options);
@@ -93,5 +106,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|static|favicon.ico|bff|firebase-messaging-sw.js).*)'],
+  matcher: [
+    '/((?!api|_next|static|favicon.ico|firebase-messaging-sw.js).*)',
+  ],
 };
