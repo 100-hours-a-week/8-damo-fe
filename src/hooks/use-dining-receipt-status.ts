@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDiningReceiptOcrStatus } from "@/src/lib/api/client/receipt";
 import type { ReceiptOcrStatus } from "@/src/types/api/dining";
 
-const RECEIPT_POLLING_INTERVAL_MS = 20_000;
+const RECEIPT_POLLING_INTERVAL_MS = 3 * 1_000;
 
 export function useDiningReceiptStatus(
   groupId: string,
