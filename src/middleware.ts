@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseCookie } from './lib/parse-cookie';
 import { ROUTES } from '@/src/constants/routes';
 
-/**
- * 인증이 필요 없는 공개 경로
- */
 const PUBLIC_ROUTES = [
   ROUTES.LOGIN,
   ROUTES.LOGIN_TEST,
   ROUTES.KAKAO_CALLBACK,
   ROUTES.GROUP_PREVIEW,
+] as const;
+
+const PUBLIC_BFF_PREFIXES = [
+  "/bff/auth/oauth",
+  "/bff/auth/reissue",
+  "/bff/auth/logout",
+  "/bff/auth/ws-token",
+  "/bff/auth/test",
 ] as const;
 
 function isPublicRoute(pathname: string): boolean {
@@ -18,10 +23,16 @@ function isPublicRoute(pathname: string): boolean {
   );
 }
 
+function isPublicBffRoute(pathname: string): boolean {
+  return PUBLIC_BFF_PREFIXES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  if (isPublicRoute(pathname)) {
+  if (isPublicRoute(pathname) || isPublicBffRoute(pathname)) {
     return NextResponse.next();
   }
 
