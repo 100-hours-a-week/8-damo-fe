@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { appendChatMessagesToCache } from "@/src/lib/lightning/chat/append-chat-messages-to-cache";
 import { MessageQueueService } from "@/src/lib/lightning/chat/message-queue-service";
@@ -35,7 +35,7 @@ export function useLightningChatIncomingQueue({
   useEffect(() => {
     const queue = new MessageQueueService({
       onDrain: (messages) => {
-        startTransition(() => {
+        // startTransition(() => {
           appendChatMessagesToCache(
             runtimeRef.current.queryClient,
             runtimeRef.current.lightningId,
@@ -44,7 +44,7 @@ export function useLightningChatIncomingQueue({
           flushListenerRef.current?.(
             messages.map((message) => String(message.messageId))
           );
-        });
+        // });
       },
     });
 
