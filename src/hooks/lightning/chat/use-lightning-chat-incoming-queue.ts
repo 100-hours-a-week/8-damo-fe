@@ -24,14 +24,16 @@ export function useLightningChatIncomingQueue({
     queryClient,
   });
 
-  flushListenerRef.current = onMessagesFlushed;
-  runtimeRef.current = {
-    lightningId,
-    queryClient,
-  };
+  useEffect(() => {
+    flushListenerRef.current = onMessagesFlushed;
+    runtimeRef.current = {
+      lightningId,
+      queryClient,
+    };
+  }, [lightningId, onMessagesFlushed, queryClient]);
 
-  if (!queueRef.current) {
-    queueRef.current = new MessageQueueService({
+  useEffect(() => {
+    const queue = new MessageQueueService({
       onDrain: (messages) => {
         startTransition(() => {
           appendChatMessagesToCache(
@@ -45,14 +47,13 @@ export function useLightningChatIncomingQueue({
         });
       },
     });
-  }
 
-  useEffect(() => {
-    const queue = queueRef.current;
+    queueRef.current = queue;
 
     return () => {
-      queue?.stop();
-      queue?.clear();
+      queue.stop();
+      queue.clear();
+      queueRef.current = null;
     };
   }, []);
 
