@@ -4,15 +4,13 @@ import { useCallback, useMemo, useRef } from "react";
 import {
   useInfiniteQuery,
   useQueryClient,
-  type InfiniteData,
 } from "@tanstack/react-query";
 import { getLightningChatMessages } from "@/src/lib/api/client/lightning";
 import type {
-  ChatMessagePageResponse,
   ChatPageParam,
   GetLightningChatMessagesParams
 } from "@/src/types/api/lightning/chat";
-import type { ChatBroadcastMessage } from "@/src/types/chat";
+import { dedupeChatMessages } from "@/src/lib/lightning/chat/merge-chat-messages";
 import { recoverMissedMessagesFromServer } from "@/src/lib/lightning/chat/recover-missed-messages";
 
 const CHAT_PAGE_SIZE = 30;
@@ -46,20 +44,6 @@ function toValidPageParam(
 
 export function getLightningChatMessagesQueryKey(lightningId: string) {
   return ["lightning", "chat", "messages", lightningId] as const;
-}
-
-export function dedupeAndSortById(
-  messages: ChatBroadcastMessage[]
-): ChatBroadcastMessage[] {
-  const unique = new Map<string, ChatBroadcastMessage>();
-
-  for (const message of messages) {
-    unique.set(String(message.messageId), message);
-  }
-
-  return Array.from(unique.values()).sort(
-    (a, b) => Number(a.messageId) - Number(b.messageId)
-  );
 }
 
 export function useLightningChatInfinite({
@@ -100,7 +84,7 @@ export function useLightningChatInfinite({
 
   const pages = useMemo(() => query.data?.pages ?? [], [query.data?.pages]);
   const messages = useMemo(
-    () => dedupeAndSortById(pages.flatMap((page) => page.messages)),
+    () => dedupeChatMessages(pages.flatMap((page) => page.messages)),
     [pages]
   );
 
