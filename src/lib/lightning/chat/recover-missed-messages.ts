@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { ChatInfiniteData} from "@/src/types/lightning-chat";
 import { getLightningChatMessages } from "@/src/lib/api/client/lightning";
-import { dedupeAndSortById } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
+import { dedupeChatMessages } from "@/src/lib/lightning/chat/merge-chat-messages";
 
 export async function recoverMissedMessagesFromServer(
   queryClient: QueryClient,
@@ -29,7 +29,7 @@ export async function recoverMissedMessagesFromServer(
 
     pagesCopy[lastIndex] = {
       ...lastPage,
-      messages: dedupeAndSortById([
+      messages: dedupeChatMessages([
         ...lastPage.messages,
         ...recoveredPage.messages,
       ]),
