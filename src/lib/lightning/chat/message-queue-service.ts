@@ -6,13 +6,14 @@ export interface MessageQueueServiceOptions {
   onDrain: (messages: ChatBroadcastMessage[]) => void;
 }
 
-const DEFAULT_INTERVAL_MS = 48;
+const DEFAULT_INTERVAL_MS = 48; // 60 fps 기준 3프레임(~50ms)
+const MAX_PARTICIPANTS = 8; // 번개 모임 최대 인원
+const BATCH_SIZE = MAX_PARTICIPANTS; // 최대 인원만큼 배치사이즈 적용
 
 export function getAdaptiveBatchSize(queueSize: number) {
-  if (queueSize >= 200) return 40;
-  if (queueSize >= 100) return 24;
-  if (queueSize >= 30) return 12;
-  return 6;
+  // MAX_PARTICIPANTS * 3 이상: 재연결 또는 비정상 누적 상황 -> 빠르게 burst
+  if (queueSize >= MAX_PARTICIPANTS * 3) return BATCH_SIZE * 2;
+  return BATCH_SIZE;
 }
 
 export class MessageQueueService {
