@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLightningChatSocket } from "@/src/hooks/lightning/chat/use-lightning-chat-socket";
 import { useLightningChatInfinite } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
 import { useUserStore } from "@/src/stores/user-store";
-import { appendChatMessageToCache } from "@/src/lib/lightning/chat/append-chat-message-to-cache";
 import { ChatMessageList } from "./chat-message-list";
 import { ChatInput } from "./chat-input";
 
@@ -60,29 +59,6 @@ export function ChatBody({ lightningId }: Props) {
     return () => window.removeEventListener("focus", handleFocus);
   }, [recoverMissedMessages]);
 
-  // Scenario 2: 버스트 메시지 (10개 / 1초) 시뮬레이션
-  const simulateBurst = useCallback((count = 10) => {
-    Array.from({ length: count }).forEach((_, i) => {
-      setTimeout(() => {
-        const fakeId = `burst-${Date.now()}-${i}`;
-        if (process.env.NEXT_PUBLIC_APP_ENV !== "prod") {
-          performance.mark(`chat:ws-received:${fakeId}`);
-        }
-        appendChatMessageToCache(queryClient, lightningId, {
-          messageId: fakeId,
-          senderId: "9999",
-          lightningId,
-          chatType: "TEXT",
-          content: `[버스트 ${i + 1}/${count}] 성능 테스트 메시지`,
-          createdAt: new Date().toISOString(),
-          senderNickname: "테스터",
-          senderImagePath: null,
-          unreadCount: 0,
-        });
-      }, i * 100);
-    });
-  }, [queryClient, lightningId]); // perf
-
   const errorMessage =
     socketError ?? (queryError instanceof Error ? queryError.message : null);
 
@@ -121,15 +97,6 @@ export function ChatBody({ lightningId }: Props) {
         <p className="px-4 pt-2 text-xs text-destructive">
           {errorMessage}
         </p>
-      )}
-
-      {isDevEnv && (
-        <button
-          onClick={() => simulateBurst(10)}
-          className="mx-4 mb-1 rounded bg-yellow-200 px-3 py-1 text-xs text-yellow-900"
-        >
-          [DEV - perf] 시나리오 2: 버스트 10개 전송
-        </button>
       )}
 
       <ChatInput onSend={sendMessage} />

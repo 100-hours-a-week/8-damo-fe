@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { ChatMessageRequest } from "@/src/types/chat";
 import { useChatRoomSubscription } from "@/src/lib/websocket/use-chat-room-subscription";
 import { publishChatMessage } from "@/src/lib/lightning/chat/publish-chat-message";
+import { useLightningChatIncomingQueue } from "@/src/hooks/lightning/chat/use-lightning-chat-incoming-queue";
 import { useLightningChatMessageHandler } from "@/src/hooks/lightning/chat/use-lightning-chat-message-handler";
 import { getLightningChatMessagesQueryKey } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
 import { useUserStore } from "@/src/stores/user-store";
@@ -26,13 +27,20 @@ export function useLightningChatSocket({
     const value = Number(state.user?.userId);
     return Number.isFinite(value) ? value : null;
   });
+  const { enqueueIncomingMessage } = useLightningChatIncomingQueue({
+    lightningId,
+    queryClient,
+    onMessagesFlushed: (messageIds) => {
+      messageIds.forEach((messageId) => onChatMessage?.(messageId));
+    },
+  });
 
   const onMessage = useLightningChatMessageHandler({
     lightningId,
     queryClient,
     setError,
     currentUserId,
-    onChatMessage,
+    enqueueIncomingMessage,
   });
 
   useChatRoomSubscription(lightningId, onMessage, enabled);

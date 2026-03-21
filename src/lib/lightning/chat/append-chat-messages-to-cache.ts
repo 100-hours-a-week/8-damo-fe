@@ -1,26 +1,33 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { ChatBroadcastMessage } from "@/src/types/chat";
 import { getLightningChatMessagesQueryKey } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
+import { dedupeChatMessages } from "@/src/lib/lightning/chat/merge-chat-messages";
+import type { ChatBroadcastMessage } from "@/src/types/chat";
 import type { ChatInfiniteData } from "@/src/types/lightning-chat";
 
-export function appendChatMessageToCache(
+export function appendChatMessagesToCache(
   queryClient: QueryClient,
   lightningId: string,
-  incomingMessage: ChatBroadcastMessage
+  incomingMessages: ChatBroadcastMessage[]
 ) {
+  if (incomingMessages.length === 0) return;
+
   queryClient.setQueryData<ChatInfiniteData>(
     getLightningChatMessagesQueryKey(lightningId),
     (old) => {
       if (!old || old.pages.length === 0) {
+        const messages = dedupeChatMessages(incomingMessages);
+        const lastMessage = messages[messages.length - 1];
+        if (!lastMessage) return old;
+
         return {
           pages: [
             {
-              messages: [incomingMessage],
+              messages,
               pageInfo: {
                 previousPageParam: null,
                 nextPageParam: null,
               },
-              anchorCursor: incomingMessage.messageId,
+              anchorCursor: lastMessage.messageId,
               initialScrollMode: "BOTTOM",
               readBoundary: null,
             },
@@ -32,13 +39,13 @@ export function appendChatMessageToCache(
       const pagesCopy = [...old.pages];
       const lastIndex = pagesCopy.length - 1;
       const lastPage = pagesCopy[lastIndex];
-      const msgs = lastPage.messages;
-      const existingIds = new Set(msgs.map((m) => String(m.messageId)));
-      if (existingIds.has(String(incomingMessage.messageId))) return old;
 
       pagesCopy[lastIndex] = {
         ...lastPage,
-        messages: [...msgs, incomingMessage],
+        messages: dedupeChatMessages([
+          ...lastPage.messages,
+          ...incomingMessages,
+        ]),
       };
 
       return {
