@@ -82,54 +82,86 @@ export class SocketManager {
     const currentGen = this.generation;
     this.log("connect start", { generation: currentGen });
 
-    const client = createStompClient({
-      brokerURL: this.brokerURL,
-      accessToken,
-      reconnectDelay: this.reconnectDelay,
-      debug: this.debug,
-      onConnect: (connectedClient) => {
-        this.log("onConnect", this.snapshot());
+    return new Promise<void>((resolve, reject) => {
+      let handshakeDone = false;
 
-        if (this.generation !== currentGen) {
-          this.log("onConnect ignored: generation mismatch", {
-            expected: currentGen,
-            actual: this.generation,
-          });
-          return;
-        }
+      const client = createStompClient({
+        brokerURL: this.brokerURL!,
+        accessToken,
+        reconnectDelay: this.reconnectDelay,
+        debug: this.debug,
+        onConnect: (connectedClient) => {
+          this.log("onConnect", this.snapshot());
 
-        this.client = connectedClient;
-        this.reconnectFailureCount = 0;
-        this.restoreAllSubscriptions();
-      },
-      onWebSocketClose: (evt) => {
-        if (this.generation !== currentGen) {
-          this.log("onWebSocketClose ignored: generation mismatch", {
-            expected: currentGen,
-            actual: this.generation,
-          });
-          return;
-        }
+          if (this.generation !== currentGen) {
+            this.log("onConnect ignored: generation mismatch", {
+              expected: currentGen,
+              actual: this.generation,
+            });
+            if (!handshakeDone) {
+              handshakeDone = true;
+              reject(new Error("connect cancelled: generation mismatch"));
+            }
+            return;
+          }
 
-        this.log("onWebSocketClose", { code: evt.code, reason: evt.reason });
-        this.clearSubscriptionHandles();
-      },
-      onStompError: (frame) => {
-        if (this.generation !== currentGen) {
-          this.log("onStompError ignored: generation mismatch", {
-            expected: currentGen,
-            actual: this.generation,
-          });
-          return;
-        }
+          this.client = connectedClient;
+          this.reconnectFailureCount = 0;
+          this.restoreAllSubscriptions();
 
-        this.log("onStompError", frame);
-        void this.handleSocketError("stomp-error", frame);
-      },
+          if (!handshakeDone) {
+            handshakeDone = true;
+            resolve();
+          }
+        },
+        onWebSocketClose: (evt) => {
+          if (this.generation !== currentGen) {
+            this.log("onWebSocketClose ignored: generation mismatch", {
+              expected: currentGen,
+              actual: this.generation,
+            });
+            if (!handshakeDone) {
+              handshakeDone = true;
+              reject(new Error("connect cancelled: generation mismatch"));
+            }
+            return;
+          }
+
+          this.log("onWebSocketClose", { code: evt.code, reason: evt.reason });
+          this.clearSubscriptionHandles();
+
+          if (!handshakeDone) {
+            handshakeDone = true;
+            reject(new Error(`WebSocket closed before handshake: code=${evt.code}`));
+          }
+        },
+        onStompError: (frame) => {
+          if (this.generation !== currentGen) {
+            this.log("onStompError ignored: generation mismatch", {
+              expected: currentGen,
+              actual: this.generation,
+            });
+            if (!handshakeDone) {
+              handshakeDone = true;
+              reject(new Error("connect cancelled: generation mismatch"));
+            }
+            return;
+          }
+
+          this.log("onStompError", frame);
+
+          if (!handshakeDone) {
+            handshakeDone = true;
+            reject(new Error("STOMP error during handshake"));
+          } else {
+            void this.handleSocketError("stomp-error", frame);
+          }
+        },
+      });
+
+      this.client = client;
+      client.activate();
     });
-
-    this.client = client;
-    client.activate();
   }
 
   async disconnect(): Promise<void> {
