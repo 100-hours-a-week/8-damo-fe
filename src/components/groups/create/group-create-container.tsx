@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -125,8 +126,12 @@ export function GroupCreateContainer({
 
       toast.success("그룹이 생성되었습니다.");
       router.push("/groups");
-    } catch {
-      toast.error("그룹 생성에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "그룹 생성에 실패했습니다.")
+          : "그룹 생성에 실패했습니다.";
+      toast.error(message);
     }
   };
 
