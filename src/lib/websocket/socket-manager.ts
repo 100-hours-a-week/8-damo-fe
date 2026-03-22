@@ -32,6 +32,7 @@ export class SocketManager {
   private registry = new Map<SubscriptionKey, SubscriptionDef>();
   private deactivating: Promise<void> | null = null;
   private recovering: Promise<void> | null = null;
+  private explicitDisconnect = false;
   private tokenReissuePromise: Promise<string | null> | null = null;
   private reconnectFailureCount = 0;
   private readonly maxReconnectWithCurrentToken = 1;
@@ -133,6 +134,8 @@ export class SocketManager {
           if (!handshakeDone) {
             handshakeDone = true;
             reject(new Error(`WebSocket closed before handshake: code=${evt.code}`));
+          } else if (!this.explicitDisconnect) {
+            void this.handleSocketError("ws-close", evt);
           }
         },
         onStompError: (frame) => {
@@ -179,10 +182,12 @@ export class SocketManager {
 
     const p = (async () => {
       try {
+        this.explicitDisconnect = true;
         await client.deactivate();
       } catch (error) {
         this.log("disconnect error", error);
       } finally {
+        this.explicitDisconnect = false;
         this.clearSubscriptionHandles();
         this.client = null;
         this.log("disconnect done");
