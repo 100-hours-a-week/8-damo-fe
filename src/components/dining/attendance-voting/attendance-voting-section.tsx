@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/src/components/ui/sonner";
@@ -53,8 +54,12 @@ export function AttendanceVotingSection({
         }),
       ]);
       router.refresh();
-    } catch {
-      toast.error("참석 투표에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "참석 투표에 실패했습니다.")
+          : "참석 투표에 실패했습니다.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

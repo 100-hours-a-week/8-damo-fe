@@ -6,9 +6,11 @@ import { PROFILE_FALLBACK_IMAGE } from "@/src/constants/image";
 import { GENDER_LABEL, AGE_GROUP_LABEL } from "@/src/constants/user";
 import { getProfileImageUrl } from "@/src/lib/profile-image";
 import { LogOut } from "lucide-react";
+import { AxiosError } from "axios";
 import { logout } from "@/src/lib/api/client/auth";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/src/stores/user-store";
+import { toast } from "@/src/components/ui/sonner";
 
 interface ProfileCardProps {
   userId: string;
@@ -31,10 +33,18 @@ export function ProfileCard({
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logout();
-    router.replace("/login");
-    setUser(null);
-    setInitialized(false);
+    try {
+      await logout();
+      setUser(null);
+      setInitialized(false);
+      router.replace("/login");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "로그아웃에 실패했습니다.")
+          : "로그아웃에 실패했습니다.";
+      toast.error(message);
+    }
   };
 
   return (

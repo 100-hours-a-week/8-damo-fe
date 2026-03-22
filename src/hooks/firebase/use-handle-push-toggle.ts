@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { AxiosError } from 'axios'
 import { useWebPushContext } from '@/src/components/providers/web-push-provider'
 import { toast } from '@/src/components/ui/sonner'
 import { patchPushNotification } from '@/src/lib/api/client/user'
@@ -20,8 +21,16 @@ export function useHandlePushToggle(): UseHandlePushToggleResult {
       if (checked) {
         const issuedToken = await enablePush()
         if (issuedToken) {
-          await patchPushNotification({ fcmToken: issuedToken, isPushNotificationAllowed: true })
-          toast.success('푸시 알림이 활성화되었습니다.')
+          try {
+            await patchPushNotification({ fcmToken: issuedToken, isPushNotificationAllowed: true })
+            toast.success('푸시 알림이 활성화되었습니다.')
+          } catch (error) {
+            const message =
+              error instanceof AxiosError
+                ? (error.response?.data?.errorMessage ?? '푸시 알림 설정에 실패했습니다.')
+                : '푸시 알림 설정에 실패했습니다.'
+            toast.error(message)
+          }
           return
         }
 
@@ -37,9 +46,17 @@ export function useHandlePushToggle(): UseHandlePushToggleResult {
         return
       }
 
-      await patchPushNotification({ fcmToken: token ?? '', isPushNotificationAllowed: false })
-      await disablePush()
-      toast.success('푸시 알림이 비활성화되었습니다.')
+      try {
+        await patchPushNotification({ fcmToken: token ?? '', isPushNotificationAllowed: false })
+        await disablePush()
+        toast.success('푸시 알림이 비활성화되었습니다.')
+      } catch (error) {
+        const message =
+          error instanceof AxiosError
+            ? (error.response?.data?.errorMessage ?? '푸시 알림 설정에 실패했습니다.')
+            : '푸시 알림 설정에 실패했습니다.'
+        toast.error(message)
+      }
     },
     [disablePush, enablePush, token]
   )

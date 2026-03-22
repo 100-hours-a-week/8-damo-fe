@@ -1,4 +1,5 @@
 "use client"
+import { AxiosError } from "axios";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import type { RestaurantVoteResponse } from "@/src/types/api/dining";
 import { useParams, useRouter } from "next/navigation";
@@ -210,9 +211,13 @@ export function RestaurantVotingSection({
       await queryClient.invalidateQueries({
         queryKey: diningRestaurantVoteQueryKey(groupId, diningId),
       });
-    } catch {
+    } catch (error) {
       handleRestaurantVoteChange(recommendRestaurantsId, previousVote);
-      toast.error("식당 투표에 실패했습니다.");
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "식당 투표에 실패했습니다.")
+          : "식당 투표에 실패했습니다.";
+      toast.error(message);
     } finally {
       setPendingVoteId(null);
     }
@@ -250,8 +255,12 @@ export function RestaurantVotingSection({
         queryKey: ["dining", "detail", groupId, diningId, "common"],
       });
       router.refresh();
-    } catch {
-      toast.error("재추천 요청에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "재추천 요청에 실패했습니다.")
+          : "재추천 요청에 실패했습니다.";
+      toast.error(message);
     } finally {
       setIsRetryingRecommendation(false);
     }
@@ -289,8 +298,12 @@ export function RestaurantVotingSection({
       });
       router.refresh();
       toast.success("회식 장소가 확정되었습니다.");
-    } catch {
-      toast.error("회식 장소 확정에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "회식 장소 확정에 실패했습니다.")
+          : "회식 장소 확정에 실패했습니다.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
       setIsDialogOpen(false);

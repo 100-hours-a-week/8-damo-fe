@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AxiosError } from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/src/components/ui/button";
@@ -48,8 +49,12 @@ export function AdditionalNotesForm() {
         setIsSubmitting(false);
         return;
       }
-    } catch {
-      toast.error("재접속을 시도해주세요.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "재접속을 시도해주세요.")
+          : "재접속을 시도해주세요.";
+      toast.error(message);
       setIsSubmitting(false);
     }
   };

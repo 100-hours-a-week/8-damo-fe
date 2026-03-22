@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
+import { AxiosError } from "axios";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/src/components/ui/button";
@@ -39,8 +40,12 @@ export function LightningDetailClient({ lightningId }: LightningDetailClientProp
       ]);
       router.push(`/lightning/${lightningId}`);
     },
-    onError: () => {
-      toast.error("번개 참가에 실패했습니다. 다시 시도해주세요.");
+    onError: (error) => {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "번개 참가에 실패했습니다. 다시 시도해주세요.")
+          : "번개 참가에 실패했습니다. 다시 시도해주세요.";
+      toast.error(message);
     },
   });
 

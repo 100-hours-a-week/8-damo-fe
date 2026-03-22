@@ -1,5 +1,6 @@
 'use client';
 
+import { AxiosError } from 'axios';
 import { toast } from '@/src/components/ui/sonner';
 import { getMe } from '@/src/lib/api/client/user';
 import { useUserStore, type OnboardingStatus } from '@/src/stores/user-store';
@@ -27,8 +28,12 @@ export function useCompleteOnboarding() {
 
       toast.error("사용자 정보를 불러오지 못했습니다. 다시 시도해주세요.");
       return false;
-    } catch {
-      toast.error("사용자 정보를 불러오지 못했습니다. 다시 시도해주세요.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "사용자 정보를 불러오지 못했습니다. 다시 시도해주세요.")
+          : "사용자 정보를 불러오지 못했습니다. 다시 시도해주세요.";
+      toast.error(message);
       return false;
     }
   };
