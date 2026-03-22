@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -70,8 +71,12 @@ export function DiningCreateContainer({
 
       toast.success("회식이 생성되었습니다.");
       router.push(`/groups/${groupId}`);
-    } catch {
-      toast.error("회식 생성에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "회식 생성에 실패했습니다.")
+          : "회식 생성에 실패했습니다.";
+      toast.error(message);
     }
   };
 
