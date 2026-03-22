@@ -32,6 +32,7 @@ export class SocketManager {
   private registry = new Map<SubscriptionKey, SubscriptionDef>();
   private deactivating: Promise<void> | null = null;
   private recovering: Promise<void> | null = null;
+  private explicitDisconnect = false;
   private tokenReissuePromise: Promise<string | null> | null = null;
   private reconnectFailureCount = 0;
   private readonly maxReconnectWithCurrentToken = 1;
@@ -82,54 +83,88 @@ export class SocketManager {
     const currentGen = this.generation;
     this.log("connect start", { generation: currentGen });
 
-    const client = createStompClient({
-      brokerURL: this.brokerURL,
-      accessToken,
-      reconnectDelay: this.reconnectDelay,
-      debug: this.debug,
-      onConnect: (connectedClient) => {
-        this.log("onConnect", this.snapshot());
+    return new Promise<void>((resolve, reject) => {
+      let handshakeDone = false;
 
-        if (this.generation !== currentGen) {
-          this.log("onConnect ignored: generation mismatch", {
-            expected: currentGen,
-            actual: this.generation,
-          });
-          return;
-        }
+      const client = createStompClient({
+        brokerURL: this.brokerURL!,
+        accessToken,
+        reconnectDelay: this.reconnectDelay,
+        debug: this.debug,
+        onConnect: (connectedClient) => {
+          this.log("onConnect", this.snapshot());
 
-        this.client = connectedClient;
-        this.reconnectFailureCount = 0;
-        this.restoreAllSubscriptions();
-      },
-      onWebSocketClose: (evt) => {
-        if (this.generation !== currentGen) {
-          this.log("onWebSocketClose ignored: generation mismatch", {
-            expected: currentGen,
-            actual: this.generation,
-          });
-          return;
-        }
+          if (this.generation !== currentGen) {
+            this.log("onConnect ignored: generation mismatch", {
+              expected: currentGen,
+              actual: this.generation,
+            });
+            if (!handshakeDone) {
+              handshakeDone = true;
+              reject(new Error("connect cancelled: generation mismatch"));
+            }
+            return;
+          }
 
-        this.log("onWebSocketClose", { code: evt.code, reason: evt.reason });
-        this.clearSubscriptionHandles();
-      },
-      onStompError: (frame) => {
-        if (this.generation !== currentGen) {
-          this.log("onStompError ignored: generation mismatch", {
-            expected: currentGen,
-            actual: this.generation,
-          });
-          return;
-        }
+          this.client = connectedClient;
+          this.reconnectFailureCount = 0;
+          this.restoreAllSubscriptions();
 
-        this.log("onStompError", frame);
-        void this.handleSocketError("stomp-error", frame);
-      },
+          if (!handshakeDone) {
+            handshakeDone = true;
+            resolve();
+          }
+        },
+        onWebSocketClose: (evt) => {
+          if (this.generation !== currentGen) {
+            this.log("onWebSocketClose ignored: generation mismatch", {
+              expected: currentGen,
+              actual: this.generation,
+            });
+            if (!handshakeDone) {
+              handshakeDone = true;
+              reject(new Error("connect cancelled: generation mismatch"));
+            }
+            return;
+          }
+
+          this.log("onWebSocketClose", { code: evt.code, reason: evt.reason });
+          this.clearSubscriptionHandles();
+
+          if (!handshakeDone) {
+            handshakeDone = true;
+            reject(new Error(`WebSocket closed before handshake: code=${evt.code}`));
+          } else if (!this.explicitDisconnect) {
+            void this.handleSocketError("ws-close", evt);
+          }
+        },
+        onStompError: (frame) => {
+          if (this.generation !== currentGen) {
+            this.log("onStompError ignored: generation mismatch", {
+              expected: currentGen,
+              actual: this.generation,
+            });
+            if (!handshakeDone) {
+              handshakeDone = true;
+              reject(new Error("connect cancelled: generation mismatch"));
+            }
+            return;
+          }
+
+          this.log("onStompError", frame);
+
+          if (!handshakeDone) {
+            handshakeDone = true;
+            reject(new Error("STOMP error during handshake"));
+          } else {
+            void this.handleSocketError("stomp-error", frame);
+          }
+        },
+      });
+
+      this.client = client;
+      client.activate();
     });
-
-    this.client = client;
-    client.activate();
   }
 
   async disconnect(): Promise<void> {
@@ -147,10 +182,12 @@ export class SocketManager {
 
     const p = (async () => {
       try {
+        this.explicitDisconnect = true;
         await client.deactivate();
       } catch (error) {
         this.log("disconnect error", error);
       } finally {
+        this.explicitDisconnect = false;
         this.clearSubscriptionHandles();
         this.client = null;
         this.log("disconnect done");
@@ -163,23 +200,34 @@ export class SocketManager {
   }
 
   private async handleSocketError(reason: string, detail?: unknown) {
+    if (this.recovering) {
+      this.log("socket error ignored: recovery in progress");
+      return this.recovering;
+    }
+
     this.log("socket error", { reason, detail });
 
-    try {
-      const cookieToken = await this.getAccessTokenFromBrowserCookie();
-      await this.disconnect();
+    this.recovering = (async () => {
+      try {
+        const cookieToken = await this.getAccessTokenFromBrowserCookie();
+        await this.disconnect();
 
-      if (cookieToken) {
-        await this.reconnectWithCurrentToken(cookieToken);
-        return;
+        if (cookieToken) {
+          await this.reconnectWithCurrentToken(cookieToken);
+          return;
+        }
+
+        this.log("no token in cookie, try reissue");
+        await this.reconnectWithReissuedToken();
+      } catch (error) {
+        this.log("socket recovery unexpected error", error);
+        await this.disconnect();
+      } finally {
+        this.recovering = null;
       }
+    })();
 
-      this.log("no token in cookie, try reissue");
-      await this.reconnectWithReissuedToken();
-    } catch (error) {
-      this.log("socket recovery unexpected error", error);
-      await this.disconnect();
-    }
+    await this.recovering;
   }
 
   private async reconnectWithCurrentToken(currentToken: string): Promise<void> {
