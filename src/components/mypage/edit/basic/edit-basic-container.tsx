@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -131,8 +132,12 @@ export function EditBasicContainer({ initialData }: EditBasicContainerProps) {
       updateOnboardingStep("DONE");
       toast.success("저장되었습니다");
       router.push("/mypage");
-    } catch {
-      toast.error("저장에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "저장에 실패했습니다.")
+          : "저장에 실패했습니다.";
+      toast.error(message);
       setIsSubmitting(false);
     }
   };
