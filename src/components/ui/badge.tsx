@@ -8,9 +8,9 @@ const badgeVariants = cva(
       variant: {
         default: "bg-primary/15 text-primary",
         secondary: "bg-muted text-muted-foreground",
-        success: "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400",
-        warning: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400",
-        error: "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400",
+        success: "bg-green-100 text-green-700",
+        warning: "bg-yellow-100 text-yellow-700",
+        error: "bg-red-100 text-red-700",
         outline: "border border-border bg-transparent text-foreground",
         // Dining status variants
         diningAttendance: "bg-[rgba(0,195,208,0.2)] text-[#009687]",
