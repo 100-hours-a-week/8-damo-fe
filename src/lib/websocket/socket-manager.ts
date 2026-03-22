@@ -163,23 +163,34 @@ export class SocketManager {
   }
 
   private async handleSocketError(reason: string, detail?: unknown) {
+    if (this.recovering) {
+      this.log("socket error ignored: recovery in progress");
+      return this.recovering;
+    }
+
     this.log("socket error", { reason, detail });
 
-    try {
-      const cookieToken = await this.getAccessTokenFromBrowserCookie();
-      await this.disconnect();
+    this.recovering = (async () => {
+      try {
+        const cookieToken = await this.getAccessTokenFromBrowserCookie();
+        await this.disconnect();
 
-      if (cookieToken) {
-        await this.reconnectWithCurrentToken(cookieToken);
-        return;
+        if (cookieToken) {
+          await this.reconnectWithCurrentToken(cookieToken);
+          return;
+        }
+
+        this.log("no token in cookie, try reissue");
+        await this.reconnectWithReissuedToken();
+      } catch (error) {
+        this.log("socket recovery unexpected error", error);
+        await this.disconnect();
+      } finally {
+        this.recovering = null;
       }
+    })();
 
-      this.log("no token in cookie, try reissue");
-      await this.reconnectWithReissuedToken();
-    } catch (error) {
-      this.log("socket recovery unexpected error", error);
-      await this.disconnect();
-    }
+    await this.recovering;
   }
 
   private async reconnectWithCurrentToken(currentToken: string): Promise<void> {
