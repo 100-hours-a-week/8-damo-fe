@@ -1,5 +1,6 @@
 "use client";
 
+import { AxiosError } from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "@/src/components/ui/sonner";
@@ -54,8 +55,12 @@ export function EditCharacteristicContainer({ initialData }: EditCharacteristicC
 
       toast.success("저장되었습니다");
       router.back();
-    } catch {
-      toast.error("저장에 실패했습니다");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "저장에 실패했습니다")
+          : "저장에 실패했습니다";
+      toast.error(message);
     }
   };
 
