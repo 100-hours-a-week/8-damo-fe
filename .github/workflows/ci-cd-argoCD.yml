@@ -46,6 +46,8 @@ jobs:
     runs-on: ubuntu-24.04-arm
     needs: [ci]
     if: github.event_name == 'push' && needs.ci.result == 'success'
+    outputs:
+      image_tag: ${{ steps.set_env.outputs.image_tag }}
 
     steps:
       - name: Checkout repository
@@ -99,6 +101,7 @@ jobs:
           } > .env
 
       - name: Resolve environment
+        id: set_env
         env:
           ECR_REPO_DEV: 080598576517.dkr.ecr.ap-northeast-2.amazonaws.com/dev/fe
           ECR_REPO_PROD: 080598576517.dkr.ecr.ap-northeast-2.amazonaws.com/prod/fe
@@ -114,6 +117,7 @@ jobs:
           echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
           echo "IMAGE=${ECR_REPO}:${IMAGE_TAG}" >> "$GITHUB_ENV"
           echo "LATEST_IMAGE=${ECR_REPO}:latest" >> "$GITHUB_ENV"
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
