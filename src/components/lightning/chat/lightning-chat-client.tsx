@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { AxiosError } from "axios";
@@ -24,6 +24,7 @@ interface Props {
 export function LightningChatClient({ lightningId }: Props) {
   const router = useRouter();
   const [isLeaving, setIsLeaving] = useState(false);
+  const hasHandledChatNotFoundRef = useRef(false);
   const { invalidateLightningList } = useInvalidateLightning();
 
   const handleBack = useCallback(() => {
@@ -52,6 +53,14 @@ export function LightningChatClient({ lightningId }: Props) {
     }
   }, [isLeaving, lightningId, invalidateLightningList, router]);
 
+  const handleChatNotFound = useCallback(() => {
+    if (hasHandledChatNotFoundRef.current) return;
+
+    hasHandledChatNotFoundRef.current = true;
+    toast.error("참여하지 않은 번개 모임입니다.");
+    router.replace("/lightning?tab=joined");
+  }, [router]);
+
   const moreMenu = useMemo(() => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -74,7 +83,7 @@ export function LightningChatClient({ lightningId }: Props) {
   return (
     <div className="font-system-ui mx-auto flex h-full w-full min-w-[320px] max-w-[430px] flex-col bg-background">
       <Header title="번개 채팅" onBack={handleBack} rightElement={moreMenu} />
-      <ChatBody lightningId={lightningId} />
+      <ChatBody lightningId={lightningId} onNotFound={handleChatNotFound} />
     </div>
   );
 }
