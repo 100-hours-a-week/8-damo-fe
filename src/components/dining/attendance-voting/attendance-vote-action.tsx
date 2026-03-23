@@ -1,4 +1,3 @@
-import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
 import { type AttendanceVoteStatus } from "@/src/types/api/dining";
 
@@ -8,48 +7,53 @@ interface AttendanceVoteActionsProps {
   onSubmit: (vote: "ATTEND" | "NON_ATTEND") => void;
 }
 
+const OPTIONS = [
+  { value: "ATTEND" as const, label: "참석" },
+  { value: "NON_ATTEND" as const, label: "불참" },
+];
+
 export function AttendanceVoteActions({
   myVoteStatus,
   isSubmitting,
   onSubmit,
 }: AttendanceVoteActionsProps) {
-  const isDisabled = isSubmitting;
-
-  const baseButtonStyles =
-    "h-14 flex-1 rounded-lg border-2 border-transparent text-[15px] font-semibold leading-[20px] transition-colors active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-16 sm:text-[16px] sm:leading-[22px]";
-  const defaultButtonStyles =
-    "bg-[#f2f2f7] text-[#404040] disabled:opacity-50";
-  const selectedButtonStyles =
-    "border-[rgba(255,141,40,0.5)] bg-[rgba(255,141,40,0.15)] text-[#ff8d28]";
-
   return (
-    <div className="flex w-full gap-2.5">
-      <Button
-        type="button"
-        onClick={() => onSubmit("ATTEND")}
-        disabled={isDisabled}
-        className={cn(
-          baseButtonStyles,
-          myVoteStatus === "ATTEND" ? selectedButtonStyles : defaultButtonStyles
-        )}
-        aria-pressed={myVoteStatus === "ATTEND"}
-      >
-        참석
-      </Button>
-      <Button
-        type="button"
-        onClick={() => onSubmit("NON_ATTEND")}
-        disabled={isDisabled}
-        className={cn(
-          baseButtonStyles,
-          myVoteStatus === "NON_ATTEND"
-            ? selectedButtonStyles
-            : defaultButtonStyles
-        )}
-        aria-pressed={myVoteStatus === "NON_ATTEND"}
-      >
-        불참석
-      </Button>
+    <div className="flex flex-col gap-3">
+      {OPTIONS.map(({ value, label }) => {
+        const isSelected = myVoteStatus === value;
+
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onSubmit(value)}
+            disabled={isSubmitting}
+            aria-pressed={isSelected}
+            className={cn(
+              "flex h-[60px] w-full items-center rounded-[14px] border-2 px-4 transition-colors disabled:opacity-50",
+              isSelected
+                ? "border-[#ff8d28] bg-[#fff7ed]"
+                : "border-[#e5e7eb] bg-white"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex size-6 shrink-0 items-center justify-center rounded-full border-2",
+                  isSelected ? "border-[#ff8d28] bg-white" : "border-[#d1d5dc] bg-white"
+                )}
+              >
+                {isSelected && (
+                  <div className="size-3 rounded-full bg-[#ff8d28]" />
+                )}
+              </div>
+              <span className="text-base font-semibold text-[#101828]">
+                {label}
+              </span>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

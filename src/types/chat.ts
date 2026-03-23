@@ -10,7 +10,9 @@ export interface ChatBroadcastMessagePayload {
   content: string;
   createdAt: string;
   senderNickname: string | undefined;
+  senderImagePath?: string | null;
   unreadCount: number;
+  clientMessageId?: string;
 }
 
 export interface UpdateUnreadCountEventPayload {
@@ -35,6 +37,7 @@ export type WsEventMessage =
 export interface ChatMessageRequest {
   chatType: ChatType;
   content: string;
+  clientMessageId?: string;
 }
 
 export interface ChatBroadcastMessage {
@@ -45,7 +48,21 @@ export interface ChatBroadcastMessage {
   content: string;
   createdAt: string;
   senderNickname: string | undefined;
+  senderImagePath?: string | null;
   unreadCount: number;
+  clientMessageId?: string;
+}
+
+export type OutboxMessageStatus = "pending" | "sending" | "failed";
+
+export interface OutboxMessage {
+  clientMessageId: string;
+  lightningId: string;
+  body: ChatMessageRequest;
+  displayMessage: ChatBroadcastMessage;
+  status: OutboxMessageStatus;
+  retryCount: number;
+  enqueuedAt: number;
 }
 
 export type ChatConnectionState =

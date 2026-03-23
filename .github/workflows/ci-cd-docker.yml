@@ -95,6 +95,22 @@ jobs:
             echo "NEXT_PUBLIC_FIREBASE_APPID=${{ secrets.NEXT_PUBLIC_FIREBASE_APPID }}"
             echo "NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}"
             echo "APP_ENV=dev"
+            echo "NEXT_PUBLIC_APP_ENV=dev"
+          
+          
+            echo "LIGHTHOUSE_BASE_URL=${{ secrets.LIGHTHOUSE_BASE_URL }}"
+            echo "LIGHTHOUSE_TEST_USER_ID=${{ secrets.LIGHTHOUSE_TEST_USER_ID }}"
+            
+            echo "PERF_TEST_GROUP_ID=2"
+            echo "PERF_TEST_DINING_ID_AV=285564029410938880"
+            echo "PERF_TEST_DINING_ID_RV=285564029855535104"
+            echo "PERF_TEST_DINING_ID_CF=285564031210295296"
+            echo "PERF_TEST_LIGHTNING_ID_CHAT=1"
+            echo "PERF_TEST_LIGHTNING_ID_DETAIL=1"
+            
+            echo "GOOGLE_SHEETS_SPREADSHEET_ID=${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}"
+            echo "GOOGLE_SERVICE_ACCOUNT_KEY=${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}"
+            echo "GOOGLE_APPLICATION_CREDENTIALS=service-account.json"
           } > .env
 
       - name: Resolve environment
@@ -183,10 +199,57 @@ jobs:
         with:
           path: tests/page_loading.js
 
+  lighthouse_test:
+    name: Lighthouse Performance
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: github.event_name == 'push' && needs.deploy.result == 'success'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Write service account key
+        run: echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}' > /tmp/sa-key.json
+
+      - name: Create empty .env.local for CI
+        run: touch .env.local
+        
+      - name: Run Lighthouse measurement
+        run: npm run lighthouse
+        env:
+          LIGHTHOUSE_BASE_URL: ${{ secrets.LIGHTHOUSE_BASE_URL }}
+          LIGHTHOUSE_TEST_USER_ID: ${{ secrets.LIGHTHOUSE_TEST_USER_ID }}
+          GOOGLE_SHEETS_SPREADSHEET_ID: ${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa-key.json
+          PR_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PERF_TEST_GROUP_ID: ${{ secrets.PERF_TEST_GROUP_ID }}
+          PERF_TEST_DINING_ID_AV: ${{ secrets.PERF_TEST_DINING_ID_AV }}
+          PERF_TEST_DINING_ID_RV: ${{ secrets.PERF_TEST_DINING_ID_RV }}
+          PERF_TEST_DINING_ID_CF: ${{ secrets.PERF_TEST_DINING_ID_CF }}
+          PERF_TEST_LIGHTNING_ID_CHAT: ${{ secrets.PERF_TEST_LIGHTNING_ID_CHAT }}
+          PERF_TEST_LIGHTNING_ID_DETAIL: ${{ secrets.PERF_TEST_LIGHTNING_ID_DETAIL }}
+
+      - name: Cleanup service account key
+        if: always()
+        run: rm -f /tmp/sa-key.json
+
   notify:
     name: Notify Discord
     runs-on: ubuntu-latest
-    needs: [ci, build_push, deploy, k6_test]
+    needs: [ci, build_push, deploy, k6_test, lighthouse_test]
     if: github.event_name == 'push' && always()
 
     steps:
@@ -196,6 +259,7 @@ jobs:
           BUILD_RESULT="${{ needs.build_push.result }}"
           DEPLOY_RESULT="${{ needs.deploy.result }}"
           K6_RESULT="${{ needs.k6_test.result }}"
+          LIGHTHOUSE_RESULT="${{ needs.lighthouse_test.result }}"
           REF="${{ github.repository }}@${{ github.ref_name }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 

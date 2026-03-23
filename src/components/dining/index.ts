@@ -11,3 +11,7 @@ export { RestaurantInfo } from "./restaurant-vote/restaurant-info";
 export { RestaurantAction } from "./restaurant-vote/restaurant-action";
 export { RestaurantPermissionAction } from "./restaurant-vote/restaurant-permission-action";
 export { RecommendationPendingSection } from "./recommendation-pending";
+export { ReceiptVerifyingSection } from "./receipt-verifying/receipt-verifying-section";
+export { ReceiptApprovedSection } from "./receipt-approved/receipt-approved-section";
+export { ReceiptRejectedSection } from "./receipt-rejected/receipt-rejected-section";
+export { CompletedSection } from "./completed/completed-section";

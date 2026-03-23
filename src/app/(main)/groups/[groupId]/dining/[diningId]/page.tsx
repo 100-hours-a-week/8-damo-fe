@@ -1,5 +1,8 @@
-import { DiningDetailClient } from "@/src/components/dining/dining-detail-client";
+import { Suspense } from "react";
+import { DiningCommonSection } from "@/src/components/dining/common";
 import { DiningErrorToast } from "@/src/components/dining/dining-error-toast";
+import { DiningStatusSectionFallback } from "@/src/components/dining/dining-status-section-fallback";
+import { DiningStatusSectionServer } from "@/src/components/dining/dining-status-section-server";
 import { getDiningCommon } from "@/src/lib/api/server/dining";
 import type { DiningCommonResponse } from "@/src/types/api/dining";
 
@@ -37,17 +40,25 @@ export default async function DiningDetailPage({
       </>
     );
   }
- 
   return (
-    <>
+    <DiningCommonSection
+      diningDate={diningCommon.diningDate}
+      diningStatus={diningCommon.diningStatus}
+      diningParticipants={diningCommon.diningParticipants}
+      isGroupLeader={diningCommon.isGroupLeader}
+      backPath={`/groups/${groupId}`}
+    >
       {errorMessages.length > 0 && (
         <DiningErrorToast messages={errorMessages} />
       )}
-      <DiningDetailClient
-        groupId={groupId}
-        diningId={diningId}
-        initialDiningCommon={diningCommon}
-      />
-    </>
+
+      <Suspense fallback={<DiningStatusSectionFallback />}>
+        <DiningStatusSectionServer
+          groupId={groupId}
+          diningId={diningId}
+          diningCommon={diningCommon}
+        />
+      </Suspense>
+    </DiningCommonSection>
   );
 }

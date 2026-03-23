@@ -1,10 +1,13 @@
 import "server-only";
 import { serverGet } from "./index";
 import type {
+  AttendanceVoteResponse,
+  ConfirmedRestaurantResponse,
   DiningCommonResponse,
-  DiningSummary,
   DiningStatus,
+  DiningSummary,
   RecommendationHistoryResponse,
+  RestaurantVoteResponse,
 } from "@/src/types/api/dining";
 
 export async function getDiningCommon(params: {
@@ -33,5 +36,35 @@ export async function getDiningRecommendationHistory(params: {
   const { groupId, diningId } = params;
   return serverGet<RecommendationHistoryResponse>(
     `/api/v1/groups/${groupId}/dining/${diningId}/recommendation-streaming/history`
+  );
+}
+
+export async function getDiningAttendanceVoteServer(params: {
+  groupId: string;
+  diningId: string;
+}): Promise<AttendanceVoteResponse> {
+  const { groupId, diningId } = params;
+  return serverGet<AttendanceVoteResponse>(
+    `/api/v1/groups/${groupId}/dining/${diningId}/attendance-vote`
+  );
+}
+
+export async function getDiningRestaurantVoteServer(params: {
+  groupId: string;
+  diningId: string;
+}): Promise<RestaurantVoteResponse[]> {
+  const { groupId, diningId } = params;
+  return serverGet<RestaurantVoteResponse[]>(
+    `/api/v1/groups/${groupId}/dining/${diningId}/restaurant-vote`
+  );
+}
+
+export async function getDiningConfirmedServer(params: {
+  groupId: string;
+  diningId: string;
+}): Promise<ConfirmedRestaurantResponse> {
+  const { groupId, diningId } = params;
+  return serverGet<ConfirmedRestaurantResponse>(
+    `/api/v1/groups/${groupId}/dining/${diningId}/confirmed`
   );
 }

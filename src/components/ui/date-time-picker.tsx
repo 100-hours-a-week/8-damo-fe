@@ -1,15 +1,27 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Calendar as CalendarIcon, X } from "lucide-react";
-import { DayPicker } from "react-day-picker";
 import { cn } from "@/src/lib/utils";
 import { Button } from "./button";
 import { Input } from "./input";
 
 import "react-day-picker/style.css";
+
+const DayPicker = dynamic(
+  () => import("react-day-picker").then((module) => module.DayPicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[320px] w-full items-center justify-center text-sm text-muted-foreground">
+        날짜 선택기를 불러오는 중...
+      </div>
+    ),
+  }
+);
 
 interface DateTimePickerProps {
   value?: Date;

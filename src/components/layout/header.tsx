@@ -1,13 +1,13 @@
-"use client";
-
 import { ArrowLeft, Bell, MoreVertical } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/src/lib/utils";
 import { Button } from "../ui/button";
+import { HeaderAlarmButtonClient } from "./header-alarm-button-client";
+import { HeaderBackButtonClient } from "./header-back-button-client";
 
 interface HeaderProps {
   title?: React.ReactNode;
   onBack?: () => void;
+  backPath?: string;
   showBackButton?: boolean;
   showMoreButton?: boolean;
   showAlarmButton?: boolean;
@@ -19,6 +19,7 @@ interface HeaderProps {
 export function Header({
   title,
   onBack,
+  backPath,
   showBackButton = true,
   showMoreButton = false,
   showAlarmButton = false,
@@ -26,24 +27,6 @@ export function Header({
   rightElement,
   className,
 }: HeaderProps) {
-  const router = useRouter();
-
-  const handleMoreClick = () => {
-    if (onMoreClick) {
-      onMoreClick();
-    } else if (showAlarmButton) {
-      router.push("/notifications");
-    }
-  };
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      router.back();
-    }
-  };
-
   return (
     <header
       className={cn(
@@ -54,15 +37,20 @@ export function Header({
       {/* 왼쪽: 뒤로가기 버튼 */}
       <div className="shrink-0">
         {showBackButton ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="sm:size-10"
-            onClick={handleBack}
-            aria-label="뒤로 가기"
-          >
-            <ArrowLeft className="size-6 text-[#8e8e93]" />
-          </Button>
+          onBack ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="sm:size-10"
+              onClick={onBack}
+              aria-label="뒤로 가기"
+            >
+              <ArrowLeft className="size-6 text-[#8e8e93]" />
+            </Button>
+          ) : (
+            <HeaderBackButtonClient backPath={backPath} />
+          )
         ) : (
           <div className="size-9 sm:size-10" />
         )}
@@ -80,19 +68,34 @@ export function Header({
         {rightElement ? (
           rightElement
         ) : showMoreButton ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="sm:size-10"
-            onClick={handleMoreClick}
-            aria-label={showAlarmButton ? "알림" : "더보기"}
-          >
-            {showAlarmButton ? (
-              <Bell className="size-5 sm:size-6 text-muted-foreground" />
-            ) : (
+          onMoreClick ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="sm:size-10"
+              onClick={onMoreClick}
+              aria-label={showAlarmButton ? "알림" : "더보기"}
+            >
+              {showAlarmButton ? (
+                <Bell className="size-5 sm:size-6 text-muted-foreground" />
+              ) : (
+                <MoreVertical className="size-5 sm:size-6" />
+              )}
+            </Button>
+          ) : showAlarmButton ? (
+            <HeaderAlarmButtonClient />
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="sm:size-10"
+              aria-label="더보기"
+            >
               <MoreVertical className="size-5 sm:size-6" />
-            )}
-          </Button>
+            </Button>
+          )
         ) : (
           <div className="size-9 sm:size-10" />
         )}

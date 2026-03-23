@@ -3,6 +3,7 @@
 import { useEffect, ReactNode } from 'react';
 import { useUserStore } from '@/src/stores/user-store';
 import { getMe } from '@/src/lib/api/client/user';
+import { reissueAuthToken } from '@/src/lib/api/client/auth';
 
 interface UserProviderProps {
   children: ReactNode;
@@ -19,15 +20,15 @@ export function UserProvider({ children }: UserProviderProps) {
 
       try {
         const result = await getMe();
-        
-        if (result.data) {
-          setUser(result.data);
-        } else {
+        setUser(result.data ?? null);
+      } catch {
+        try {
+          await reissueAuthToken();
+          const retryResult = await getMe();
+          setUser(retryResult.data ?? null);
+        } catch {
           setUser(null);
         }
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-        setUser(null);
       } finally {
         setLoading(false);
         setInitialized(true);

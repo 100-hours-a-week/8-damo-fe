@@ -1,13 +1,15 @@
 "use client"
+import { AxiosError } from "axios";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 import type { RestaurantVoteResponse } from "@/src/types/api/dining";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { RestaurantCard } from "./restaurant-card";
 import { RestaurantVotingCarousel } from "./restaurant-voting-carousel";
 import { RestaurantVoteFallback } from "./restaurant-vote-fallback";
 import { RestaurantPermissionAction } from "./restaurant-permission-action";
 import { toast } from "@/src/components/ui/sonner";
-import { useMemo, useState } from "react";
 import { diningRestaurantVoteQueryKey } from "@/src/hooks/dining/use-dining-restaurant-vote";
 import {
   Dialog,
@@ -18,14 +20,16 @@ import {
   DialogTitle,
 } from "@/src/components/ui/dialog";
 import { Button } from "@/src/components/ui/button";
-import { confirmRestaurant, refreshRecommendRestaurants } from "@/src/lib/api/client/dining";
+import {
+  confirmRestaurant,
+  refreshRecommendRestaurants,
+  voteRestaurant,
+} from "@/src/lib/api/client/dining";
 
 interface RestaurantVotingSectionProps {
   restaurants: RestaurantVoteResponse[];
   isGroupLeader: boolean;
   canAdditionalAttend?: boolean;
-  onConfirmDining?: (restaurantId: number) => void;
-  onRetryRecommendation?: () => void;
   onAdditionalAttend?: () => void;
 }
 
@@ -33,54 +37,190 @@ export function RestaurantVotingSection({
   restaurants,
   isGroupLeader,
   canAdditionalAttend = false,
-  onConfirmDining,
-  onRetryRecommendation,
   onAdditionalAttend,
 }: RestaurantVotingSectionProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const params = useParams<{ groupId?: string | string[]; diningId?: string | string[] }>();
   const resolveParam = (value?: string | string[]) =>
     Array.isArray(value) ? value[0] : value;
   const groupId = resolveParam(params?.groupId);
   const diningId = resolveParam(params?.diningId);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRetryingRecommendation, setIsRetryingRecommendation] = useState(false);
+  const [displayRestaurants, setDisplayRestaurants] = useState(restaurants);
+  const [pendingVoteId, setPendingVoteId] = useState<number | null>(null);
 
-  const activeRestaurantId = useMemo(() => {
-    if (!restaurants.length) {
-      return null;
-    }
-
-    const clampedIndex = Math.min(
-      Math.max(activeIndex, 0),
-      restaurants.length - 1
-    );
-    return restaurants[clampedIndex].recommendRestaurantsId;
-  }, [activeIndex, restaurants]);
+  useEffect(() => {
+    setDisplayRestaurants(restaurants);
+  }, [restaurants]);
   
-  if (!restaurants.length) {
+  if (!displayRestaurants.length) {
     return <RestaurantVoteFallback />;
   }
 
-  const moveToReceiptPage = () => {
-    if (!groupId || !diningId) {
-      toast.error("경로 정보를 확인할 수 없습니다.");
-      return;
-    }
-
-    router.push(`/groups/${groupId}/dining/${diningId}/receipt`);
+  const handleRestaurantVoteChange = (
+    recommendRestaurantsId: number,
+    nextVote: Pick<RestaurantVoteResponse, "restaurantVoteStatus" | "likeCount" | "dislikeCount">
+  ) => {
+    setDisplayRestaurants((current) =>
+      current.map((restaurant) =>
+        restaurant.recommendRestaurantsId === recommendRestaurantsId
+          ? {
+              ...restaurant,
+              ...nextVote,
+            }
+          : restaurant
+      )
+    );
   };
 
-  const handleConfirmDining = (restaurantId: number) => {
-    if (onConfirmDining) {
-      onConfirmDining(restaurantId);
+  const getNextVoteState = (
+    currentRestaurant: RestaurantVoteResponse,
+    nextStatus: "LIKE" | "DISLIKE"
+  ) => {
+    const currentStatus =
+      currentRestaurant.restaurantVoteStatus === "LIKED"
+        ? "LIKE"
+        : currentRestaurant.restaurantVoteStatus === "DISLIKED"
+        ? "DISLIKE"
+        : currentRestaurant.restaurantVoteStatus === "LIKE" ||
+          currentRestaurant.restaurantVoteStatus === "DISLIKE"
+        ? currentRestaurant.restaurantVoteStatus
+        : "NONE";
+
+    if (currentStatus === "NONE") {
+      return {
+        restaurantVoteStatus: nextStatus,
+        likeCount:
+          nextStatus === "LIKE"
+            ? currentRestaurant.likeCount + 1
+            : currentRestaurant.likeCount,
+        dislikeCount:
+          nextStatus === "DISLIKE"
+            ? currentRestaurant.dislikeCount + 1
+            : currentRestaurant.dislikeCount,
+      } satisfies Pick<
+        RestaurantVoteResponse,
+        "restaurantVoteStatus" | "likeCount" | "dislikeCount"
+      >;
+    }
+
+    if (currentStatus === nextStatus) {
+      return {
+        restaurantVoteStatus: "NONE",
+        likeCount:
+          nextStatus === "LIKE"
+            ? Math.max(0, currentRestaurant.likeCount - 1)
+            : currentRestaurant.likeCount,
+        dislikeCount:
+          nextStatus === "DISLIKE"
+            ? Math.max(0, currentRestaurant.dislikeCount - 1)
+            : currentRestaurant.dislikeCount,
+      } satisfies Pick<
+        RestaurantVoteResponse,
+        "restaurantVoteStatus" | "likeCount" | "dislikeCount"
+      >;
+    }
+
+    return {
+      restaurantVoteStatus: nextStatus,
+      likeCount:
+        nextStatus === "LIKE"
+          ? currentRestaurant.likeCount + 1
+          : Math.max(0, currentRestaurant.likeCount - 1),
+      dislikeCount:
+        nextStatus === "DISLIKE"
+          ? currentRestaurant.dislikeCount + 1
+          : Math.max(0, currentRestaurant.dislikeCount - 1),
+    } satisfies Pick<
+      RestaurantVoteResponse,
+      "restaurantVoteStatus" | "likeCount" | "dislikeCount"
+    >;
+  };
+
+  const handleVoteRestaurant = async (
+    recommendRestaurantsId: number,
+    nextStatus: "LIKE" | "DISLIKE"
+  ) => {
+    if (!groupId || !diningId || pendingVoteId !== null) {
       return;
     }
 
-    moveToReceiptPage();
+    const currentRestaurant = displayRestaurants.find(
+      (restaurant) => restaurant.recommendRestaurantsId === recommendRestaurantsId
+    );
+
+    if (!currentRestaurant) {
+      return;
+    }
+
+    const previousVote = {
+      restaurantVoteStatus: currentRestaurant.restaurantVoteStatus,
+      likeCount: currentRestaurant.likeCount,
+      dislikeCount: currentRestaurant.dislikeCount,
+    };
+    const optimisticVote = getNextVoteState(currentRestaurant, nextStatus);
+
+    setPendingVoteId(recommendRestaurantsId);
+    handleRestaurantVoteChange(recommendRestaurantsId, optimisticVote);
+
+    try {
+      const result = await voteRestaurant({
+        groupId,
+        diningId,
+        recommendRestaurantsId,
+        restaurantVoteStatus: nextStatus,
+      });
+
+      if (
+        typeof result.data === "object" &&
+        result.data !== null &&
+        !Array.isArray(result.data)
+      ) {
+        handleRestaurantVoteChange(recommendRestaurantsId, {
+          restaurantVoteStatus:
+            result.data.restaurantVoteStatus === "LIKE"
+              ? "LIKE"
+              : result.data.restaurantVoteStatus === "DISLIKE"
+              ? "DISLIKE"
+              : "NONE",
+          likeCount:
+            typeof result.data.likeCount === "number"
+              ? result.data.likeCount
+              : optimisticVote.likeCount,
+          dislikeCount:
+            typeof result.data.dislikeCount === "number"
+              ? result.data.dislikeCount
+              : optimisticVote.dislikeCount,
+        });
+      } else if (typeof result.data === "string") {
+        handleRestaurantVoteChange(recommendRestaurantsId, {
+          ...optimisticVote,
+          restaurantVoteStatus:
+            result.data === "LIKE"
+              ? "LIKE"
+              : result.data === "DISLIKE"
+              ? "DISLIKE"
+              : "NONE",
+        });
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: diningRestaurantVoteQueryKey(groupId, diningId),
+      });
+    } catch (error) {
+      handleRestaurantVoteChange(recommendRestaurantsId, previousVote);
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "식당 투표에 실패했습니다.")
+          : "식당 투표에 실패했습니다.";
+      toast.error(message);
+    } finally {
+      setPendingVoteId(null);
+    }
   };
 
   const handleRetryRecommendation = async () => {
@@ -111,9 +251,16 @@ export function RestaurantVotingSection({
       await queryClient.invalidateQueries({
         queryKey: diningRestaurantVoteQueryKey(groupId, diningId),
       });
-      onRetryRecommendation?.();
-    } catch {
-      toast.error("재추천 요청에 실패했습니다.");
+      await queryClient.invalidateQueries({
+        queryKey: ["dining", "detail", groupId, diningId, "common"],
+      });
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "재추천 요청에 실패했습니다.")
+          : "재추천 요청에 실패했습니다.";
+      toast.error(message);
     } finally {
       setIsRetryingRecommendation(false);
     }
@@ -123,23 +270,14 @@ export function RestaurantVotingSection({
     onAdditionalAttend?.();
   };
 
-  const handleConfirmClick = () => {
-    if (isGroupLeader) {
-      moveToReceiptPage();
-      return;
-    }
-
-    setIsDialogOpen(true);
-  };
-
   const handleConfirmSubmit = async () => {
     if (!groupId || !diningId) {
       toast.error("경로 정보를 확인할 수 없습니다.");
       return;
     }
 
-    if (activeRestaurantId === null) {
-      toast.error("확정할 식당을 선택할 수 없습니다.");
+    if (selectedId === null) {
+      toast.error("확정할 식당을 선택해주세요.");
       return;
     }
 
@@ -149,16 +287,23 @@ export function RestaurantVotingSection({
       await confirmRestaurant({
         groupId,
         diningId,
-        recommendRestaurantsId: activeRestaurantId,
+        recommendRestaurantsId: selectedId,
       });
 
       await queryClient.invalidateQueries({
         queryKey: diningRestaurantVoteQueryKey(groupId, diningId),
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["dining", "detail", groupId, diningId, "common"],
+      });
+      router.refresh();
       toast.success("회식 장소가 확정되었습니다.");
-      handleConfirmDining(activeRestaurantId);
-    } catch {
-      toast.error("회식 장소 확정에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.errorMessage ?? "회식 장소 확정에 실패했습니다.")
+          : "회식 장소 확정에 실패했습니다.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
       setIsDialogOpen(false);
@@ -166,26 +311,80 @@ export function RestaurantVotingSection({
   };
 
   return (
-    <section className="flex w-full flex-col items-center gap-4">
-      <RestaurantVotingCarousel onIndexChange={setActiveIndex}>
-        {restaurants.map((restaurant) => (
-          <div
-            key={restaurant.recommendRestaurantsId}
-            className="flex w-full flex-col items-center"
-          >
-            <RestaurantCard restaurant={restaurant} />
-          </div>
-        ))}
-      </RestaurantVotingCarousel>
-      <div className="w-full px-4 sm:px-5">
+    <section className="flex w-full flex-col">
+      {/* 투표 현황 */}
+      <div className="flex w-full flex-col gap-4 bg-white px-5 pb-6 pt-6">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-lg font-semibold leading-6 text-[#101828]">투표 현황</h3>
+          <p className="text-[14px] leading-5 text-[#6a7282]">현재까지 투표 결과입니다</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {displayRestaurants.map((restaurant) => {
+            const isSelected = selectedId === restaurant.recommendRestaurantsId;
+            return (
+              <button
+                key={restaurant.recommendRestaurantsId}
+                type="button"
+                onClick={() => setSelectedId(isSelected ? null : restaurant.recommendRestaurantsId)}
+                className={`flex h-[70px] w-full items-center justify-between rounded-[14px] border px-[17px] transition-colors ${
+                  isSelected
+                    ? "border-[#ff8d28] bg-[#fff7ed]"
+                    : "border-[#e5e7eb] bg-white"
+                }`}
+              >
+                <p className="text-[14px] font-semibold leading-5 text-[#101828]">
+                  {restaurant.restaurantsName}
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="size-4" fill="none" strokeWidth={1.5} />
+                    <span className="text-[14px] font-medium leading-5 text-[#0a0a0a]">
+                      {restaurant.likeCount}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsDown className="size-4" fill="none" strokeWidth={1.5} />
+                    <span className="text-[14px] font-medium leading-5 text-[#6a7282]">
+                      {restaurant.dislikeCount}
+                    </span>
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
         <RestaurantPermissionAction
           isGroupLeader={isGroupLeader}
           canAdditionalAttend={canAdditionalAttend}
-          onConfirmDining={handleConfirmClick}
+          onConfirmDining={() => setIsDialogOpen(true)}
           onRetryRecommendation={handleRetryRecommendation}
           onAdditionalAttend={handleAdditionalAttend}
           isRetryingRecommendation={isRetryingRecommendation}
+          isConfirmDisabled={selectedId === null}
         />
+      </div>
+
+      {/* 식당 카드 캐러셀 */}
+      <div className="flex w-full flex-col items-center gap-4 pt-4">
+        <RestaurantVotingCarousel>
+          {displayRestaurants.map((restaurant) => (
+            <div
+              key={restaurant.recommendRestaurantsId}
+              className="flex w-full flex-col items-center"
+            >
+              <RestaurantCard
+                restaurant={restaurant}
+                disabled={pendingVoteId === restaurant.recommendRestaurantsId}
+                onLike={() =>
+                  handleVoteRestaurant(restaurant.recommendRestaurantsId, "LIKE")
+                }
+                onDislike={() =>
+                  handleVoteRestaurant(restaurant.recommendRestaurantsId, "DISLIKE")
+                }
+              />
+            </div>
+          ))}
+        </RestaurantVotingCarousel>
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>

@@ -1,6 +1,6 @@
 export type LightningTab = "joined" | "available";
 
-export type LocationPermission = "unknown" | "granted" | "denied";
+export type LocationPermission = "unknown" | "prompt" | "granted" | "denied";
 
 export type LightningStatus = "OPEN" | "CLOSED" | "DONE" | string;
 

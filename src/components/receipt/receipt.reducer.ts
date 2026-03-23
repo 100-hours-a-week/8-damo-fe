@@ -1,5 +1,3 @@
-import type { ReceiptAnalysisResult } from "@/src/components/receipt/receipt-page-client";
-
 interface FileContext {
   selectedFile: File;
   previewUrl: string;
@@ -8,24 +6,21 @@ interface FileContext {
 export type ReceiptState =
   | {
       type: "idle";
+      selectedFile?: File;
+      previewUrl?: string;
     }
   | ({
-      type: "selected";
+      type: "upload";
     } & FileContext)
   | ({
-      type: "analyzing";
-    } & FileContext)
-  | ({
-      type: "success";
-      analysisResult: ReceiptAnalysisResult;
-    } & FileContext)
-  | ({
-      type: "invalid_receipt";
-    } & FileContext)
-  | ({
-      type: "error";
+      type: "upload_fail";
       errorMessage?: string;
-    } & FileContext);
+    } & FileContext)
+  | {
+      type: "analyzing";
+      selectedFile?: File;
+      previewUrl?: string;
+    };
 
 export type ReceiptAction =
   | {
@@ -34,18 +29,14 @@ export type ReceiptAction =
       previewUrl: string;
     }
   | {
-      type: "START_ANALYSIS";
+      type: "START_UPLOAD";
     }
   | {
-      type: "ANALYSIS_SUCCESS";
-      analysisResult: ReceiptAnalysisResult;
-    }
-  | {
-      type: "ANALYSIS_INVALID";
-    }
-  | {
-      type: "ANALYSIS_ERROR";
+      type: "UPLOAD_FAIL";
       errorMessage?: string;
+    }
+  | {
+      type: "START_ANALYZING";
     }
   | {
       type: "RESET";
@@ -54,6 +45,16 @@ export type ReceiptAction =
 export const initialReceiptState: ReceiptState = {
   type: "idle",
 };
+
+export function getInitialReceiptState(initialOcrStatus: "PENDING" | "SUCCESS" | "FAIL" | null) {
+  if (initialOcrStatus === "PENDING") {
+    return {
+      type: "analyzing",
+    } satisfies ReceiptState;
+  }
+
+  return initialReceiptState;
+}
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled case: ${String(value)}`);
@@ -67,18 +68,16 @@ export function receiptReducer(
     case "SELECT_FILE": {
       switch (state.type) {
         case "idle":
-        case "selected":
-        case "invalid_receipt":
-        case "error": {
+        case "upload_fail":
+        case "analyzing": {
           return {
-            type: "selected",
+            type: "idle",
             selectedFile: action.file,
             previewUrl: action.previewUrl,
           };
         }
 
-        case "analyzing":
-        case "success": {
+        case "upload": {
           return state;
         }
 
@@ -88,8 +87,33 @@ export function receiptReducer(
       }
     }
 
-    case "START_ANALYSIS": {
-      if (state.type !== "selected" && state.type !== "error") {
+    case "START_UPLOAD": {
+      if (!state.selectedFile || !state.previewUrl) {
+        return state;
+      }
+
+      return {
+        type: "upload",
+        selectedFile: state.selectedFile,
+        previewUrl: state.previewUrl,
+      };
+    }
+
+    case "UPLOAD_FAIL": {
+      if (state.type !== "upload") {
+        return state;
+      }
+
+      return {
+        type: "upload_fail",
+        selectedFile: state.selectedFile,
+        previewUrl: state.previewUrl,
+        errorMessage: action.errorMessage,
+      };
+    }
+
+    case "START_ANALYZING": {
+      if (state.type !== "upload") {
         return state;
       }
 
@@ -100,46 +124,8 @@ export function receiptReducer(
       };
     }
 
-    case "ANALYSIS_SUCCESS": {
-      if (state.type !== "analyzing") {
-        return state;
-      }
-
-      return {
-        type: "success",
-        selectedFile: state.selectedFile,
-        previewUrl: state.previewUrl,
-        analysisResult: action.analysisResult,
-      };
-    }
-
-    case "ANALYSIS_INVALID": {
-      if (state.type !== "analyzing") {
-        return state;
-      }
-
-      return {
-        type: "invalid_receipt",
-        selectedFile: state.selectedFile,
-        previewUrl: state.previewUrl,
-      };
-    }
-
-    case "ANALYSIS_ERROR": {
-      if (state.type !== "analyzing") {
-        return state;
-      }
-
-      return {
-        type: "error",
-        selectedFile: state.selectedFile,
-        previewUrl: state.previewUrl,
-        errorMessage: action.errorMessage,
-      };
-    }
-
     case "RESET": {
-      if (state.type !== "success") {
+      if (state.type === "idle") {
         return state;
       }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -10,7 +10,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export function ChatInput({ onSend, disabled = false }: Props) {
+export const ChatInput = memo(function ChatInput({ onSend, disabled = false }: Props) {
   const [value, setValue] = useState("");
 
   const canSend = value.trim().length > 0 && !disabled;
@@ -49,4 +49,4 @@ export function ChatInput({ onSend, disabled = false }: Props) {
       </form>
     </div>
   );
-}
+});

@@ -7,6 +7,7 @@ interface RestaurantPermissionActionProps {
   onRetryRecommendation: () => void;
   onAdditionalAttend: () => void;
   isRetryingRecommendation?: boolean;
+  isConfirmDisabled?: boolean;
 }
 
 export function RestaurantPermissionAction({
@@ -16,22 +17,27 @@ export function RestaurantPermissionAction({
   onRetryRecommendation,
   onAdditionalAttend,
   isRetryingRecommendation = false,
+  isConfirmDisabled = false,
 }: RestaurantPermissionActionProps) {
   return (
-    <div className="flex w-full flex-col gap-2.5">
+    <div className="flex w-full flex-col gap-3">
       {isGroupLeader && (
         <>
-          <Button type="button" onClick={onConfirmDining} className="h-12 w-full sm:h-14">
-            회식 확정하기
+          <Button
+            type="button"
+            onClick={onConfirmDining}
+            disabled={isConfirmDisabled}
+            className="h-14 w-full rounded-[14px] bg-[#ff8d28] text-white active:bg-[#ff8d28]/90 disabled:opacity-40"
+          >
+            장소 확정하기
           </Button>
           <Button
             type="button"
-            variant="secondary"
             onClick={onRetryRecommendation}
-            className="h-12 w-full sm:h-14"
+            className="h-14 w-full rounded-[14px] border-2 border-[#d1d5dc] bg-white text-[#101828] hover:bg-gray-50 active:bg-gray-100"
             disabled={isRetryingRecommendation}
           >
-            {isRetryingRecommendation ? "추천 다시 받는 중..." : "추천 다시 받기"}
+            {isRetryingRecommendation ? "추천 다시 받는 중..." : "장소 재추천"}
           </Button>
         </>
       )}
@@ -40,7 +46,7 @@ export function RestaurantPermissionAction({
           type="button"
           variant="secondary"
           onClick={onAdditionalAttend}
-          className="h-12 w-full sm:h-14"
+          className="h-14 w-full rounded-[14px]"
         >
           추가 참석하기
         </Button>

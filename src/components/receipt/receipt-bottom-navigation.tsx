@@ -10,7 +10,6 @@ import {
 interface ReceiptBottomNavigationProps {
   viewState: ReceiptPageViewState;
   onReset: () => void;
-  onAnalyze: () => void;
   onConfirm: () => void;
 }
 
@@ -28,69 +27,49 @@ function getBottomActionConfig(
   viewState: ReceiptPageViewState,
   handlers: {
     onReset: () => void;
-    onAnalyze: () => void;
     onConfirm: () => void;
   }
 ): BottomActionConfig {
   switch (viewState.type) {
     case "idle": {
+      const hasSelection = Boolean(viewState.previewUrl && viewState.selectedFileName);
+
       return {
         leftLabel: "다시 선택",
-        leftDisabled: true,
-        rightLabel: "검증하기",
-        rightDisabled: true,
+        leftDisabled: !hasSelection,
+        leftAction: hasSelection ? handlers.onReset : undefined,
+        rightLabel: "업로드하기",
+        rightDisabled: !hasSelection,
+        rightAction: hasSelection ? handlers.onConfirm : undefined,
       };
     }
 
-    case "selected": {
+    case "upload": {
       return {
-        leftLabel: "다시 선택",
-        leftDisabled: false,
-        leftAction: handlers.onReset,
-        rightLabel: "검증하기",
-        rightDisabled: false,
-        rightAction: handlers.onAnalyze,
+        leftLabel: "업로드 중...",
+        leftDisabled: true,
+        rightLabel: "검증 요청 중...",
+        rightDisabled: true,
       };
     }
 
     case "analyzing": {
       return {
-        leftLabel: "분석 중...",
+        leftLabel: "검증 중...",
         leftDisabled: true,
-        rightLabel: "검증 중...",
+        rightLabel: "결과 확인 중...",
         rightDisabled: true,
       };
     }
 
-    case "success": {
-      return {
-        leftLabel: "다시 업로드",
-        leftDisabled: false,
-        leftAction: handlers.onReset,
-        rightLabel: "확정하기",
-        rightDisabled: false,
-        rightAction: handlers.onConfirm,
-      };
-    }
-
-    case "invalid_receipt": {
-      return {
-        leftLabel: "다시 업로드",
-        leftDisabled: false,
-        leftAction: handlers.onReset,
-        rightLabel: "재업로드 필요",
-        rightDisabled: true,
-      };
-    }
-
-    case "error": {
+    case "upload_fail": {
       return {
         leftLabel: "다시 업로드",
         leftDisabled: false,
         leftAction: handlers.onReset,
         rightLabel: "다시 시도",
         rightDisabled: false,
-        rightAction: handlers.onAnalyze,
+        rightAction: handlers.onConfirm,
         showRetryIcon: true,
       };
     }
@@ -99,7 +78,7 @@ function getBottomActionConfig(
       return {
         leftLabel: "다시 선택",
         leftDisabled: true,
-        rightLabel: "검증하기",
+        rightLabel: "업로드하기",
         rightDisabled: true,
       };
     }
@@ -109,12 +88,10 @@ function getBottomActionConfig(
 export function ReceiptBottomNavigation({
   viewState,
   onReset,
-  onAnalyze,
   onConfirm,
 }: ReceiptBottomNavigationProps) {
   const actionConfig = getBottomActionConfig(viewState, {
     onReset,
-    onAnalyze,
     onConfirm,
   });
 

@@ -71,7 +71,9 @@ export async function POST(request: NextRequest) {
       { status: responseStatus }
     );
 
-    response.headers.set("Set-Cookie", setCookieHeader);
+    for (const cookie of parsedCookies) {
+      response.cookies.set(cookie.name, cookie.value, cookie.options);
+    }
 
     return response;
   } catch (error) {

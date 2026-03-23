@@ -1,10 +1,12 @@
 "use client";
 
-import { Fragment } from "react";
-import type { ChatBroadcastMessage } from "@/src/types/chat";
+import { Fragment, memo, useLayoutEffect } from "react";
+import { RefreshCw, X } from "lucide-react";
+import { Avatar } from "@/src/components/ui/avatar";
+import { PROFILE_FALLBACK_IMAGE } from "@/src/constants/image";
+import { getProfileImageUrl } from "@/src/lib/profile-image";
+import type { ChatBroadcastMessage, OutboxMessageStatus } from "@/src/types/chat";
 import { ChatUnreadDivider } from "./chat-unread-divider";
-
-const avatarDemo = "🤍";
 
 function formatChatTime(createdAt: string): string {
   const parsed = new Date(createdAt);
@@ -22,33 +24,65 @@ interface Props {
   currentUserId: string | null;
   showDividerBefore: boolean;
   showDividerAfter: boolean;
+  outboxStatus?: OutboxMessageStatus;
+  onRetry?: () => void;
+  onCancel?: () => void;
 }
 
-export function ChatMessageItem({
+export const ChatMessageItem = memo(function ChatMessageItem({
   message,
   currentUserId,
   showDividerBefore,
   showDividerAfter,
+  outboxStatus,
+  onRetry,
+  onCancel,
 }: Props) {
+  useLayoutEffect(() => {
+    if (process.env.NEXT_PUBLIC_APP_ENV === "prod") return;
+    performance.mark(`chat:rendered:${message.messageId}`);
+    try {
+      performance.measure(
+        `chat:render-latency:${message.messageId}`,
+        `chat:ws-received:${message.messageId}`,
+        `chat:rendered:${message.messageId}`,
+      );
+    } catch {
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // perf
+
   const isMine = message.senderId === currentUserId;
   const timeText = formatChatTime(message.createdAt);
   const senderLabel = isMine ? "나" : message.senderNickname;
+  const senderImageUrl = isMine
+    ? null
+    : getProfileImageUrl(message.senderId, message.senderImagePath ?? null);
   const unreadCount = message.unreadCount ?? 0;
   const shouldShowUnreadCount =
-    Number.isFinite(unreadCount) && unreadCount > 0;
+    !outboxStatus && Number.isFinite(unreadCount) && unreadCount > 0;
+
+  const isPending = outboxStatus === "pending" || outboxStatus === "sending";
+  const isFailed = outboxStatus === "failed";
 
   return (
     <Fragment>
       {showDividerBefore && <ChatUnreadDivider />}
 
-      <li
+      <div
         data-message-id={String(message.messageId)}
         className={isMine ? "flex justify-end" : "flex items-start gap-2"}
       >
         {!isMine && (
-          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-primary to-[#ff6b28] text-sm text-primary-foreground">
-            {avatarDemo}
-          </div>
+          <Avatar
+            src={senderImageUrl}
+            alt={senderLabel ?? "사용자"}
+            fallbackText={senderLabel ?? "사용자"}
+            fallbackUrl={PROFILE_FALLBACK_IMAGE}
+            size="sm"
+            showBorder={false}
+            className="mt-0.5"
+          />
         )}
 
         <div className="max-w-[78%] min-w-0 space-y-1">
@@ -74,7 +108,7 @@ export function ChatMessageItem({
             <p
               className={
                 isMine
-                  ? "max-w-full break-all rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-base leading-6 text-primary-foreground"
+                  ? `max-w-full break-all rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-base leading-6 text-primary-foreground${isFailed ? " opacity-50" : ""}`
                   : "max-w-full break-all break-words rounded-2xl rounded-bl-md bg-background px-4 py-2.5 text-base leading-6 text-foreground shadow-xs"
               }
             >
@@ -88,7 +122,35 @@ export function ChatMessageItem({
             )}
           </div>
 
-          {timeText && (
+          {isFailed && (
+            <div className="flex items-center justify-end gap-2 px-1">
+              <span className="text-xs text-destructive">전송 실패</span>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="inline-flex items-center gap-0.5 text-xs font-medium text-primary"
+              >
+                <RefreshCw className="size-3" />
+                재전송
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground"
+              >
+                <X className="size-3" />
+                취소
+              </button>
+            </div>
+          )}
+
+          {isPending && (
+            <p className="px-1 text-right text-xs text-muted-foreground">
+              전송중
+            </p>
+          )}
+
+          {!isPending && !isFailed && timeText && (
             <p
               className={
                 isMine
@@ -100,9 +162,9 @@ export function ChatMessageItem({
             </p>
           )}
         </div>
-      </li>
+      </div>
 
       {showDividerAfter && <ChatUnreadDivider />}
     </Fragment>
   );
-}
+});

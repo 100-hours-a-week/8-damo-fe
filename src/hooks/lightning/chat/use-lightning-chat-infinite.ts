@@ -1,18 +1,17 @@
 "use client";
 
+import axios from "axios";
 import { useCallback, useMemo, useRef } from "react";
 import {
   useInfiniteQuery,
   useQueryClient,
-  type InfiniteData,
 } from "@tanstack/react-query";
 import { getLightningChatMessages } from "@/src/lib/api/client/lightning";
 import type {
-  ChatMessagePageResponse,
   ChatPageParam,
   GetLightningChatMessagesParams
 } from "@/src/types/api/lightning/chat";
-import type { ChatBroadcastMessage } from "@/src/types/chat";
+import { dedupeChatMessages } from "@/src/lib/lightning/chat/merge-chat-messages";
 import { recoverMissedMessagesFromServer } from "@/src/lib/lightning/chat/recover-missed-messages";
 
 const CHAT_PAGE_SIZE = 30;
@@ -48,18 +47,19 @@ export function getLightningChatMessagesQueryKey(lightningId: string) {
   return ["lightning", "chat", "messages", lightningId] as const;
 }
 
-export function dedupeAndSortById(
-  messages: ChatBroadcastMessage[]
-): ChatBroadcastMessage[] {
-  const unique = new Map<string, ChatBroadcastMessage>();
-
-  for (const message of messages) {
-    unique.set(String(message.messageId), message);
+function getChatLoadErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.errorMessage ?? "채팅을 불러올 수 없습니다.";
   }
 
-  return Array.from(unique.values()).sort(
-    (a, b) => Number(a.messageId) - Number(b.messageId)
-  );
+  return error instanceof Error && error.message
+    ? error.message
+    : "채팅을 불러올 수 없습니다.";
+}
+
+function getChatLoadErrorStatus(error: unknown) {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
 }
 
 export function useLightningChatInfinite({
@@ -100,7 +100,7 @@ export function useLightningChatInfinite({
 
   const pages = useMemo(() => query.data?.pages ?? [], [query.data?.pages]);
   const messages = useMemo(
-    () => dedupeAndSortById(pages.flatMap((page) => page.messages)),
+    () => dedupeChatMessages(pages.flatMap((page) => page.messages)),
     [pages]
   );
 
@@ -116,6 +116,15 @@ export function useLightningChatInfinite({
       return Number(current) > Number(max) ? current : max;
     }, "0");
   }, [messages]);
+  const chatLoadErrorMessage = useMemo(() => {
+    if (!query.isError) return null;
+    return getChatLoadErrorMessage(query.error);
+  }, [query.error, query.isError]);
+  const chatLoadErrorStatus = useMemo(() => {
+    if (!query.isError) return null;
+    return getChatLoadErrorStatus(query.error);
+  }, [query.error, query.isError]);
+
   const markInitialized = useCallback(() => {
     isInitializedRef.current = true;
   }, []);
@@ -143,6 +152,8 @@ export function useLightningChatInfinite({
     anchorCursor,
     readBoundary,
     maxMessageId,
+    chatLoadErrorMessage,
+    chatLoadErrorStatus,
     recoverMissedMessages,
     fetchPreviousPage,
     markInitialized,

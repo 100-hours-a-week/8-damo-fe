@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useRecommendationConnection } from "./use-recommendation-connection";
 import { useInitialMessages, mergeMessages, appendMessage as appendMessageUtil } from "./use-stream-messages";
 import type {
@@ -27,6 +28,7 @@ export function useDiningRecommendationStream({
   enabled,
 }: UseDiningRecommendationStreamParams): UseDiningRecommendationStreamResult {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const initialMessages = useInitialMessages({ groupId, diningId, enabled });
   const [streamMessages, setStreamMessages] = useState<RecommendationStreamMessage[]>([]);
 
@@ -58,6 +60,7 @@ export function useDiningRecommendationStream({
     onMessage: handleMessage,
     onDone: () => {
       void syncDiningQueries();
+      router.refresh();
     },
   });
 

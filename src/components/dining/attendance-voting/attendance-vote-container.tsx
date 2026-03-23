@@ -29,7 +29,6 @@ export function AttendanceVotingContainer({
         totalCount: data.totalGroupMemberCount,
         voteCount: data.completedVoteCount,
       }}
-      diningDate={diningCommon.diningDate}
       myVoteStatus={data.attendanceVoteStatus}
     />
   );

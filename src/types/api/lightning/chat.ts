@@ -32,6 +32,7 @@ export interface ChatMessageRaw {
   messageId: number | string;
   senderId: number | string;
   senderNickname: string;
+  senderImagePath?: string | null;
   lightningId: number | string;
   chatType: ChatType;
   content: string;

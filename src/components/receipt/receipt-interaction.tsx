@@ -2,22 +2,29 @@
 
 import { type ChangeEvent, useEffect, useReducer, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ReceiptPageClient,
   type ReceiptPageViewState,
 } from "@/src/components/receipt/receipt-page-client";
 import { ReceiptBottomNavigation } from "@/src/components/receipt/receipt-bottom-navigation";
 import { toast } from "@/src/components/ui/sonner";
+import { useDiningReceiptStatus } from "@/src/hooks/use-dining-receipt-status";
 import {
-  initialReceiptState,
+  getInitialReceiptState,
   receiptReducer,
   type ReceiptState,
 } from "./receipt.reducer";
-import { classifyReceiptImage } from "@/src/lib/receipt/receipt-classifier";
+import { uploadReceipt } from "@/src/lib/api/client/dining";
+import { getPresignedUrl } from "@/src/lib/api/client/s3";
+import { getImageContentType } from "@/src/constants/s3/util";
+import type { ApiResponse } from "@/src/lib/api/client";
+import type { ReceiptOcrStatus } from "@/src/types/api/dining";
 
 interface ReceiptInteractionProps {
   groupId: string;
   diningId: string;
+  initialReceiptOcrStatus: ReceiptOcrStatus;
 }
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -27,29 +34,30 @@ function getFileExtension(fileName: string) {
   return fileName.split(".").pop()?.toLowerCase() ?? "";
 }
 
-function formatAnalyzedAt(date: Date) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(date);
-}
-
 function toViewState(state: ReceiptState): ReceiptPageViewState {
   switch (state.type) {
     case "idle": {
       return {
         type: "idle",
+        previewUrl: state.previewUrl,
+        selectedFileName: state.selectedFile?.name,
       };
     }
 
-    case "selected": {
+    case "upload": {
       return {
-        type: "selected",
+        type: "upload",
         previewUrl: state.previewUrl,
         selectedFileName: state.selectedFile.name,
+      };
+    }
+
+    case "upload_fail": {
+      return {
+        type: "upload_fail",
+        previewUrl: state.previewUrl,
+        selectedFileName: state.selectedFile.name,
+        errorMessage: state.errorMessage,
       };
     }
 
@@ -57,33 +65,7 @@ function toViewState(state: ReceiptState): ReceiptPageViewState {
       return {
         type: "analyzing",
         previewUrl: state.previewUrl,
-        selectedFileName: state.selectedFile.name,
-      };
-    }
-
-    case "success": {
-      return {
-        type: "success",
-        previewUrl: state.previewUrl,
-        selectedFileName: state.selectedFile.name,
-        analysisResult: state.analysisResult,
-      };
-    }
-
-    case "invalid_receipt": {
-      return {
-        type: "invalid_receipt",
-        previewUrl: state.previewUrl,
-        selectedFileName: state.selectedFile.name,
-      };
-    }
-
-    case "error": {
-      return {
-        type: "error",
-        previewUrl: state.previewUrl,
-        selectedFileName: state.selectedFile.name,
-        errorMessage: state.errorMessage,
+        selectedFileName: state.selectedFile?.name,
       };
     }
 
@@ -95,20 +77,32 @@ function toViewState(state: ReceiptState): ReceiptPageViewState {
   }
 }
 
-export function ReceiptInteraction({ groupId, diningId }: ReceiptInteractionProps) {
+export function ReceiptInteraction({
+  groupId,
+  diningId,
+  initialReceiptOcrStatus,
+}: ReceiptInteractionProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
-  const isMountedRef = useRef(true);
 
-  const [state, dispatch] = useReducer(receiptReducer, initialReceiptState);
+  const [state, dispatch] = useReducer(
+    receiptReducer,
+    initialReceiptOcrStatus,
+    getInitialReceiptState
+  );
+  const { data: receiptStatus } = useDiningReceiptStatus(
+    groupId,
+    diningId,
+    state.type === "analyzing",
+    initialReceiptOcrStatus
+  );
+  const uploadFailMessage =
+    state.type === "upload_fail" ? state.errorMessage : undefined;
 
   useEffect(() => {
-    isMountedRef.current = true;
-
     return () => {
-      isMountedRef.current = false;
-
       if (previewUrlRef.current) {
         URL.revokeObjectURL(previewUrlRef.current);
         previewUrlRef.current = null;
@@ -122,13 +116,6 @@ export function ReceiptInteraction({ groupId, diningId }: ReceiptInteractionProp
     }
   };
 
-  const clearPreviewUrl = () => {
-    if (previewUrlRef.current) {
-      URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = null;
-    }
-  };
-
   const openFilePicker = () => {
     if (!fileInputRef.current) {
       return;
@@ -139,18 +126,7 @@ export function ReceiptInteraction({ groupId, diningId }: ReceiptInteractionProp
   };
 
   const resetToIdle = () => {
-    if (state.type === "success") {
-      clearPreviewUrl();
-      resetInput();
-      dispatch({ type: "RESET" });
-      return;
-    }
-
-    if (
-      state.type === "selected" ||
-      state.type === "invalid_receipt" ||
-      state.type === "error"
-    ) {
+    if (state.selectedFile && state.previewUrl) {
       openFilePicker();
     }
   };
@@ -196,49 +172,104 @@ export function ReceiptInteraction({ groupId, diningId }: ReceiptInteractionProp
     handleSelectFile(file);
   };
 
-  const handleAnalyze = async () => {
-    if (state.type !== "selected" && state.type !== "error") {
+  const handleUploadError = (fallback: string, response?: ApiResponse<unknown>) => {
+    const errorMessage = response?.errorMessage ?? fallback;
+
+    dispatch({
+      type: "UPLOAD_FAIL",
+      errorMessage,
+    });
+  };
+
+  const handleConfirm = async () => {
+    if (!state.selectedFile || !state.previewUrl) {
       toast.error("먼저 영수증 이미지를 선택해주세요.");
       return;
     }
 
-    dispatch({ type: "START_ANALYSIS" });
+    const file = state.selectedFile;
+    const contentType = getImageContentType(file);
+
+    if (!contentType) {
+      toast.error("지원하지 않는 이미지 형식입니다.");
+      return;
+    }
+
+    dispatch({ type: "START_UPLOAD" });
+
+    let presignedResult: Awaited<ReturnType<typeof getPresignedUrl>>;
+    try {
+      presignedResult = await getPresignedUrl({
+        directory: "dining/receipt",
+        fileName: diningId,
+        contentType,
+      });
+    } catch (error: unknown) {
+      const apiError = (error as { response?: { data?: ApiResponse<unknown> } })?.response?.data;
+      handleUploadError("영수증 업로드에 실패했습니다. 다시 시도해주세요.", apiError);
+      return;
+    }
+
+    const s3Response = await fetch(presignedResult.data.presignedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": contentType },
+      body: file,
+    });
+
+    if (!s3Response.ok) {
+      handleUploadError("영수증 업로드에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
 
     try {
-      const result = await classifyReceiptImage(state.selectedFile);
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      if (!result.isReceipt) {
-        dispatch({ type: "ANALYSIS_INVALID" });
-        return;
-      }
-
-      dispatch({
-        type: "ANALYSIS_SUCCESS",
-        analysisResult: {
-          ...result,
-          analyzedAt: formatAnalyzedAt(new Date()),
-        },
+      await uploadReceipt({
+        groupId,
+        diningId,
+        receiptUrl: presignedResult.data.objectKey,
       });
-    } catch (error) {
-      console.log(error);
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      dispatch({
-        type: "ANALYSIS_ERROR",
-        errorMessage: "모델 실행 중 오류가 발생했습니다.",
+      await queryClient.removeQueries({
+        queryKey: ["dining", "detail", groupId, diningId, "receipt-ocr-status"],
       });
+      dispatch({ type: "START_ANALYZING" });
+    } catch (error: unknown) {
+      const apiError = (error as { response?: { data?: ApiResponse<unknown> } })?.response?.data;
+      handleUploadError("영수증 업로드에 실패했습니다. 다시 시도해주세요.", apiError);
     }
   };
 
-  const handleConfirm = () => {
-    toast.success("영수증 확인이 완료되었습니다.");
-    router.push(`/groups/${groupId}/dining/${diningId}`);
-  };
+  useEffect(() => {
+    if (state.type !== "upload_fail") {
+      return;
+    }
+
+    toast.error(uploadFailMessage ?? "영수증 업로드에 실패했습니다. 다시 시도해주세요.");
+  }, [state.type, uploadFailMessage]);
+
+  useEffect(() => {
+    if (state.type !== "analyzing") {
+      return;
+    }
+
+    if (receiptStatus !== "SUCCESS" && receiptStatus !== "FAIL") {
+      return;
+    }
+
+    const completeReceiptFlow = async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["dining", "detail", groupId, diningId, "common"],
+      });
+
+      if (receiptStatus === "SUCCESS") {
+        toast("영수증 검증에 성공하셨습니다!");
+      } else {
+        toast.error("올바른 영수증 이미지를 올려주세요");
+      }
+
+      router.push(`/groups/${groupId}/dining/${diningId}`);
+    };
+
+    void completeReceiptFlow();
+  }, [diningId, groupId, queryClient, receiptStatus, router, state.type]);
 
   const viewState = toViewState(state);
 
@@ -253,7 +284,6 @@ export function ReceiptInteraction({ groupId, diningId }: ReceiptInteractionProp
       <ReceiptBottomNavigation
         viewState={viewState}
         onReset={resetToIdle}
-        onAnalyze={handleAnalyze}
         onConfirm={handleConfirm}
       />
     </div>

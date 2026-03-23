@@ -132,7 +132,7 @@ export function RecommendationPendingStreamingPanel({
     <ul
       ref={setScrollRootRef}
       aria-live="polite"
-      className="relative mt-3 flex max-h-[300px] flex-col gap-2 overflow-y-auto pr-1"
+      className="font-system-ui relative mt-3 flex max-h-[300px] flex-col gap-2 overflow-y-auto pr-1"
     >
       {messages.map((message, index) => (
         <li

@@ -26,10 +26,10 @@ function Toaster({ ...props }: ToasterProps) {
             "ml-auto shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[clamp(0.75rem,3vw,0.875rem)] font-semibold text-primary-foreground",
           cancelButton:
             "ml-auto shrink-0 rounded-lg bg-muted px-3 py-1.5 text-[clamp(0.75rem,3vw,0.875rem)] font-semibold text-muted-foreground",
-          success: "border-green-500/30 bg-green-50 dark:bg-green-950/30",
-          error: "border-destructive/30 bg-red-50 dark:bg-red-950/30",
-          warning: "border-yellow-500/30 bg-yellow-50 dark:bg-yellow-950/30",
-          info: "border-blue-500/30 bg-blue-50 dark:bg-blue-950/30",
+          success: "border-green-500/30 bg-green-50",
+          error: "border-destructive/30 bg-red-50",
+          warning: "border-yellow-500/30 bg-yellow-50",
+          info: "border-blue-500/30 bg-blue-50",
         },
       }}
       offset={{ top: DESKTOP_HEADER_OFFSET, right: TOASTER_RIGHT_OFFSET }}

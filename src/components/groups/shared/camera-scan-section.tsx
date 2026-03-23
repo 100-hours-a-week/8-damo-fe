@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import type { Html5Qrcode } from "html5-qrcode";
 import { CameraPermissionFallback, type PermissionError } from "./camera-permission-fallback";
 
 interface CameraScanSectionProps {
@@ -9,6 +9,16 @@ interface CameraScanSectionProps {
   isScanning: boolean;
   onScanningChange: (scanning: boolean) => void;
   disabled?: boolean;
+}
+
+let html5QrcodeModulePromise: Promise<typeof import("html5-qrcode")> | null = null;
+
+async function loadHtml5Qrcode() {
+  if (!html5QrcodeModulePromise) {
+    html5QrcodeModulePromise = import("html5-qrcode");
+  }
+
+  return html5QrcodeModulePromise;
 }
 
 export function CameraScanSection({
@@ -75,6 +85,7 @@ export function CameraScanSection({
       await stopScanner();
 
       if (!scannerRef.current) {
+        const { Html5Qrcode } = await loadHtml5Qrcode();
         scannerRef.current = new Html5Qrcode("qr-reader");
       }
 

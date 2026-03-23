@@ -1,5 +1,4 @@
 import { ThumbsDown, ThumbsUp } from "lucide-react";
-import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils";
 
 interface RestaurantActionProps {
@@ -22,45 +21,45 @@ export function RestaurantAction({
   isDisliked = false,
 }: RestaurantActionProps) {
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2.5 sm:gap-3">
-      <Button
+    <div className="flex w-full items-center gap-3">
+      <button
         type="button"
-        variant="ghost"
-        size="sm"
         onClick={onLike}
         disabled={disabled}
         aria-pressed={isLiked}
         className={cn(
-          "h-9 min-w-[88px] flex-1 items-center justify-center gap-1.5 px-2 text-[14px] font-medium leading-5 sm:h-10 sm:min-w-[98px] sm:flex-none sm:text-[15px] sm:leading-[22px]",
-          isLiked && "bg-primary/10 text-primary"
+          "flex h-[50px] flex-1 items-center justify-center gap-2 rounded-[14px] border text-[16px] font-semibold leading-6 transition-colors",
+          isLiked
+            ? "border-[#ffedd4] bg-[#fff7ed] text-[#101828]"
+            : "border-[#e5e7eb] bg-white text-[#101828]"
         )}
       >
         <ThumbsUp
-          className={cn("size-4", isLiked && "text-primary")}
+          className="size-5"
           fill={isLiked ? "currentColor" : "none"}
           strokeWidth={isLiked ? 0 : 1.5}
         />
         <span>좋아요 {likeCount}</span>
-      </Button>
-      <Button
+      </button>
+      <button
         type="button"
-        variant="ghost"
-        size="sm"
         onClick={onDislike}
         disabled={disabled}
         aria-pressed={isDisliked}
         className={cn(
-          "h-9 min-w-[88px] flex-1 items-center justify-center gap-1.5 px-2 text-[14px] font-medium leading-5 sm:h-10 sm:min-w-[98px] sm:flex-none sm:text-[15px] sm:leading-[22px]",
-          isDisliked && "bg-primary/10 text-primary"
+          "flex h-[50px] flex-1 items-center justify-center gap-2 rounded-[14px] border text-[16px] font-semibold leading-6 transition-colors",
+          isDisliked
+            ? "border-[#ffedd4] bg-[#fff7ed] text-[#101828]"
+            : "border-[#e5e7eb] bg-white text-[#101828]"
         )}
       >
         <ThumbsDown
-          className={cn("size-4", isDisliked && "text-primary")}
+          className="size-5"
           fill={isDisliked ? "currentColor" : "none"}
           strokeWidth={isDisliked ? 0 : 1.5}
         />
         <span>싫어요 {dislikeCount}</span>
-      </Button>
+      </button>
     </div>
   );
 }

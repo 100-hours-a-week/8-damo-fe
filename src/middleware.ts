@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseCookie } from './lib/parse-cookie';
 import { ROUTES } from '@/src/constants/routes';
 
-/**
- * 인증이 필요 없는 공개 경로
- */
 const PUBLIC_ROUTES = [
   ROUTES.LOGIN,
   ROUTES.LOGIN_TEST,
   ROUTES.KAKAO_CALLBACK,
   ROUTES.GROUP_PREVIEW,
+] as const;
+
+const PUBLIC_BFF_PREFIXES = [
+  "/bff/auth/oauth",
+  "/bff/auth/reissue",
+  "/bff/auth/logout",
+  "/bff/auth/ws-token",
+  "/bff/auth/test",
 ] as const;
 
 function isPublicRoute(pathname: string): boolean {
@@ -18,10 +23,16 @@ function isPublicRoute(pathname: string): boolean {
   );
 }
 
-export async function proxy(request: NextRequest) {
+function isPublicBffRoute(pathname: string): boolean {
+  return PUBLIC_BFF_PREFIXES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  if (isPublicRoute(pathname)) {
+  if (isPublicRoute(pathname) || isPublicBffRoute(pathname)) {
     return NextResponse.next();
   }
 
@@ -51,21 +62,29 @@ export async function proxy(request: NextRequest) {
         const setCookieHeader = reissueResponse.headers.get("set-cookie");
 
         if (setCookieHeader) {
-          const cookieStrings = setCookieHeader.split(/,(?=\s*\w+=)/);
-          const requestHeaders = new Headers(request.headers);
+          const parsedCookies = setCookieHeader
+            .split(/,(?=\s*\w+=)/)
+            .map((s) => parseCookie(s.trim()))
+            .filter((c): c is NonNullable<typeof c> => c !== null);
 
-          for (const cookieString of cookieStrings) {
-            const parsed = parseCookie(cookieString.trim());
-            if (parsed) {
-              requestHeaders.set(parsed.name, parsed.value);
-            }
+          const requestHeaders = new Headers(request.headers);
+          const nextAccessToken =
+            parsedCookies.find((cookie) => cookie.name === "access_token")
+              ?.value ?? null;
+
+          if (nextAccessToken) {
+            requestHeaders.set("access_token", nextAccessToken);
           }
 
           const response = NextResponse.next({
-            request: { headers: requestHeaders },
+            request: {
+              headers: requestHeaders,
+            },
           });
 
-          response.headers.set("Set-Cookie", setCookieHeader);
+          for (const cookie of parsedCookies) {
+            response.cookies.set(cookie.name, cookie.value, cookie.options);
+          }
 
           return response;
         }
@@ -87,5 +106,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|static|favicon.ico|bff|firebase-messaging-sw.js).*)'],
+  matcher: [
+    '/((?!api|_next|static|favicon.ico|firebase-messaging-sw.js).*)',
+  ],
 };

@@ -73,6 +73,7 @@ function mapChatMessage(dto: ChatMessagePageRaw["messages"][number]): ChatBroadc
     messageId: String(dto.messageId),
     senderId: String(dto.senderId),
     senderNickname: dto.senderNickname,
+    senderImagePath: dto.senderImagePath ?? null,
     lightningId: String(dto.lightningId),
     chatType: dto.chatType,
     content: dto.content,
@@ -169,11 +170,12 @@ export async function getLightningDetail(
 
 export async function getLightningRecommendation(
   x: string,
-  y: string
+  y: string,
+  config?: import("axios").AxiosRequestConfig
 ): Promise<ApiResponse<Restaurant>> {
   const response = await bffGet<LightningRecommendationResponse>(
     "/lightning/recommendation",
-    { params: { x, y } }
+    { params: { x, y }, ...config }
   );
   return {
     ...response,

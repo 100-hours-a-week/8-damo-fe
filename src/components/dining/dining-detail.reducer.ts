@@ -1,3 +1,5 @@
+import type { DiningStatus } from "@/src/types/api/dining";
+
 export type DiningState =
   | {
       type: "attendance-voting";
@@ -10,62 +12,41 @@ export type DiningState =
     }
   | {
       type: "confirmed";
+    }
+  | {
+      type: "completed";
     };
 
-export type DiningAction =
-  | {
-      type: "ATTENDANCE_VOTING_COMPLETED";
-    }
-  | {
-      type: "RECOMMENDATION_READY";
-    }
-  | {
-      type: "CONFIRM_RESTAURANT";
-    }
-  | {
-      type: "RETRY_RECOMMENDATION";
-    }
+export type DiningAction = {
+  type: "SYNC_FROM_SERVER";
+  diningStatus: DiningStatus;
+};
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled case: ${String(value)}`);
+}
+
+export function mapDiningStatusToState(diningStatus: DiningStatus): DiningState {
+  switch (diningStatus) {
+    case "ATTENDANCE_VOTING":
+      return { type: "attendance-voting" };
+    case "RECOMMENDATION_PENDING":
+      return { type: "recommendation-pending" };
+    case "RESTAURANT_VOTING":
+      return { type: "restaurant-voting" };
+    case "CONFIRMED":
+      return { type: "confirmed" };
+    case "COMPLETE":
+      return { type: "completed" };
+    default:
+      return assertNever(diningStatus);
+  }
 }
 
 export function diningDetailReducer(
   state: DiningState,
   action: DiningAction
 ): DiningState {
-  switch (state.type) {
-    case "attendance-voting": {
-      if (action.type === "ATTENDANCE_VOTING_COMPLETED") {
-        return { type: "recommendation-pending" };
-      }
-      return state;
-    }
-
-    case "recommendation-pending": {
-      if (action.type === "RECOMMENDATION_READY") {
-        return { type: "restaurant-voting" };
-      }
-      return state;
-    }
-
-    case "restaurant-voting": {
-      if (action.type === "CONFIRM_RESTAURANT") {
-        return { type: "confirmed" };
-      }
-
-      if (action.type === "RETRY_RECOMMENDATION") {
-        return { type: "recommendation-pending" };
-      }
-
-      return state;
-    }
-
-    case "confirmed": {
-      return state;
-    }
-
-    default:
-      return assertNever(state);
-  }
+  const nextState = mapDiningStatusToState(action.diningStatus);
+  return nextState.type === state.type ? state : nextState;
 }

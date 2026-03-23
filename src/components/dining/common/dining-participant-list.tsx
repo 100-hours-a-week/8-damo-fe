@@ -1,5 +1,3 @@
-"use client";
-
 import { Avatar } from "@/src/components/ui/avatar";
 
 export interface Participant {
@@ -25,15 +23,15 @@ export function DiningParticipantList({
   participants,
 }: DiningParticipantListProps) {
   return (
-    <section className="flex w-full flex-col gap-3 px-4 sm:px-5">
-      <h2 className="text-[15px] font-semibold leading-[21px] text-[#333333] sm:text-[16px] sm:leading-[22px]">
-        참석 확정 인원
+    <section className="w-full rounded-[20px] bg-white p-5">
+      <h2 className="mb-4 text-lg font-bold leading-6 text-[#101828]">
+        회식 참석자 ({participants.length}명)
       </h2>
-      <div className="flex flex-col">
+      <div className="grid grid-cols-2 gap-3">
         {participants.map((participant) => (
           <div
             key={participant.userId}
-            className="flex items-center gap-3 py-3"
+            className="flex flex-col items-center gap-2 rounded-[14px] border border-[#e5e7eb] py-4"
           >
             <Avatar
               src={`https://${process.env.NEXT_PUBLIC_S3_CDN}/${participant.imagePath}`}
@@ -43,7 +41,7 @@ export function DiningParticipantList({
               showBorder={false}
               className="bg-[#f2f2f7]"
             />
-            <span className="text-[15px] font-semibold leading-[21px] text-[#333333] sm:text-[16px] sm:leading-[22px]">
+            <span className="text-sm font-semibold leading-5 text-[#101828]">
               {participant.nickname}
             </span>
           </div>

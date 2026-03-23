@@ -10,6 +10,7 @@ import { LocationPermissionGate } from "./location-permission-gate";
 import { LightningCreateActionBar } from "./lightning-create-action-bar";
 import { LightningCapacityInput } from "./lightning-capacity-input";
 import { LightningDescriptionInput } from "./lightning-description-input";
+import { RecommendedRestaurantLoading } from "./recommended-restaurant-loading";
 import { RecommendedRestaurantSection } from "./recommended-restaurant-section";
 import {
   LightningDateTimeField,
@@ -25,8 +26,15 @@ import { useCreateLightning } from "@/src/hooks/lightning/create/use-create-ligh
 export function LightningCreateContainer() {
   const router = useRouter();
 
-  const { permission, restaurant, isLoadingRestaurant, requestRestaurant } =
-    useLightningRestaurant();
+  const {
+    permission,
+    isInitializing,
+    restaurant,
+    isLoadingRestaurant,
+    isTimedOut,
+    requestRestaurant,
+    retryRestaurant,
+  } = useLightningRestaurant();
 
   const {
     description,
@@ -55,6 +63,9 @@ export function LightningCreateContainer() {
       !restaurant
     );
   }, [permission, description, isDateValid, restaurant]);
+
+  const shouldBypassPermissionGate =
+    isInitializing || (permission !== "denied" && isLoadingRestaurant);
 
   const handleSubmit = rhfHandleSubmit(async (formData) => {
     if (disabled) return;
@@ -93,9 +104,17 @@ export function LightningCreateContainer() {
       <div className="flex-1 space-y-4 px-4 pb-6 pt-4">
         <LocationPermissionGate
           permission={permission}
+          isInitializing={shouldBypassPermissionGate}
           onRequestPermission={requestRestaurant}
         >
-          <RecommendedRestaurantSection restaurant={restaurant} />
+          {isLoadingRestaurant ? (
+            <RecommendedRestaurantLoading />
+          ) : (
+            <RecommendedRestaurantSection
+              restaurant={restaurant}
+              onRetry={isTimedOut || !restaurant ? retryRestaurant : undefined}
+            />
+          )}
 
           <LightningDescriptionInput
             value={description}

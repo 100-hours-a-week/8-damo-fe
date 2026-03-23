@@ -1,5 +1,3 @@
-"use client";
-
 interface DiningDateProps {
   date: string;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Phone } from "lucide-react";
-import { KakaoMapView } from "@/src/components/ui/kakao-map-view";
+import { LazyKakaoMapView } from "@/src/components/ui/lazy-kakao-map-view";
 
 interface RestaurantInfoProps {
   location: {
@@ -24,7 +24,11 @@ export function RestaurantInfo({
   return (
     <section className="flex w-full flex-col gap-2.5 sm:gap-3">
       <div className="w-full overflow-hidden rounded-[12px]">
-        <KakaoMapView location={location} className="h-36 w-full sm:h-40" />
+        <LazyKakaoMapView
+          location={location}
+          className="h-36 w-full sm:h-40"
+          fallbackClassName="h-36 w-full sm:h-40"
+        />
       </div>
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1.5 sm:gap-2">
