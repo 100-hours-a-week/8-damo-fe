@@ -4,7 +4,7 @@ import { ArrowDown } from "lucide-react";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import type { ChatBroadcastMessage } from "@/src/types/chat";
+import type { ChatBroadcastMessage, OutboxMessage } from "@/src/types/chat";
 import type {
   ChatInitialScrollMode,
   ChatReadBoundary,
@@ -15,6 +15,7 @@ import { ChatMessageItem } from "./chat-message-item";
 
 interface Props {
   messages: ChatBroadcastMessage[];
+  outboxMessages: OutboxMessage[];
   currentUserId: string | null;
   readBoundary: ChatReadBoundary | null;
   initialScrollMode: ChatInitialScrollMode;
@@ -27,6 +28,8 @@ interface Props {
   fetchNextPage: () => Promise<unknown>;
   markInitialized: () => void;
   lastChatMessageId: string | null;
+  onRetry: (clientMessageId: string) => void;
+  onCancel: (clientMessageId: string) => void;
 }
 
 const INVIEW_MARGIN = "15% 0px 15% 0px";
@@ -41,6 +44,7 @@ function isSameMessageId(
 
 export const ChatMessageList = memo(function ChatMessageList({
   messages,
+  outboxMessages,
   currentUserId,
   readBoundary,
   initialScrollMode,
@@ -53,6 +57,8 @@ export const ChatMessageList = memo(function ChatMessageList({
   fetchNextPage,
   markInitialized,
   lastChatMessageId,
+  onRetry,
+  onCancel,
 }: Props) {
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
@@ -67,8 +73,21 @@ export const ChatMessageList = memo(function ChatMessageList({
     []
   );
 
+  const outboxStatusMap = useMemo(() => {
+    const map = new Map<string, OutboxMessage>();
+    for (const item of outboxMessages) {
+      map.set(item.clientMessageId, item);
+    }
+    return map;
+  }, [outboxMessages]);
+
+  const allMessages = useMemo(() => {
+    const outboxDisplayMessages = outboxMessages.map((item) => item.displayMessage);
+    return [...messages, ...outboxDisplayMessages];
+  }, [messages, outboxMessages]);
+
   const virtualizer = useVirtualizer({
-    count: messages.length,
+    count: allMessages.length,
     getScrollElement: () => scrollElementRef.current,
     estimateSize: () => 80,
     overscan: 5,
@@ -91,7 +110,7 @@ export const ChatMessageList = memo(function ChatMessageList({
 
   const { hasPendingIncomingMessage, scrollToLatestMessage } = useChatScrollController({
     scrollRoot,
-    messagesLength: messages.length,
+    messagesLength: allMessages.length,
     initialScrollMode,
     anchorCursor,
     hasPreviousPage,
@@ -106,7 +125,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     lastChatMessageId,
     lastMessageElement,
     virtualizer,
-    messages,
+    messages: allMessages,
   });
 
   const showDivider = readBoundary?.showDivider === true;
@@ -144,7 +163,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       >
         <div ref={topSentinelRef} className="h-px w-full" />
 
-        {messages.length === 0 && (
+        {allMessages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <div className="rounded-2xl border border-border/70 bg-background/75 px-5 py-4 text-center shadow-xs">
               <p className="text-sm font-semibold text-foreground">
@@ -157,7 +176,7 @@ export const ChatMessageList = memo(function ChatMessageList({
           </div>
         )}
 
-        {messages.length > 0 && (
+        {allMessages.length > 0 && (
           <div
             style={{
               height: `${virtualizer.getTotalSize()}px`,
@@ -165,8 +184,11 @@ export const ChatMessageList = memo(function ChatMessageList({
             }}
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
-              const message = messages[virtualRow.index];
-              const isLastMessage = virtualRow.index === messages.length - 1;
+              const message = allMessages[virtualRow.index];
+              const isLastMessage = virtualRow.index === allMessages.length - 1;
+              const outboxItem = message.clientMessageId
+                ? outboxStatusMap.get(message.clientMessageId)
+                : undefined;
               return (
                 <div
                   key={virtualRow.key}
@@ -192,6 +214,17 @@ export const ChatMessageList = memo(function ChatMessageList({
                         message.messageId,
                         dividerAfterMessageId
                       )}
+                      outboxStatus={outboxItem?.status}
+                      onRetry={
+                        outboxItem
+                          ? () => onRetry(outboxItem.clientMessageId)
+                          : undefined
+                      }
+                      onCancel={
+                        outboxItem
+                          ? () => onCancel(outboxItem.clientMessageId)
+                          : undefined
+                      }
                     />
                   </div>
                 </div>
@@ -203,7 +236,7 @@ export const ChatMessageList = memo(function ChatMessageList({
         <div ref={bottomSentinelRef} className="h-px w-full" />
       </section>
 
-      {hasPendingIncomingMessage && messages.length > 0 && (
+      {hasPendingIncomingMessage && allMessages.length > 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-end px-4">
           <Button
             type="button"
