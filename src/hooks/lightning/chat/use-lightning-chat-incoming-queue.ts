@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { appendChatMessagesToCache } from "@/src/lib/lightning/chat/append-chat-messages-to-cache";
 import { MessageQueueService } from "@/src/lib/lightning/chat/message-queue-service";
@@ -57,9 +57,12 @@ export function useLightningChatIncomingQueue({
     };
   }, []);
 
-  return {
-    enqueueIncomingMessage: (message: ChatBroadcastMessage) => {
+  const enqueueIncomingMessage = useCallback(
+    (message: ChatBroadcastMessage) => {
       queueRef.current?.enqueue(message);
     },
-  };
+    []
+  );
+
+  return { enqueueIncomingMessage };
 }
