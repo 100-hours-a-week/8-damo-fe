@@ -53,6 +53,18 @@ export interface ChatBroadcastMessage {
   clientMessageId?: string;
 }
 
+export type OutboxMessageStatus = "pending" | "sending" | "failed";
+
+export interface OutboxMessage {
+  clientMessageId: string;
+  lightningId: string;
+  body: ChatMessageRequest;
+  displayMessage: ChatBroadcastMessage;
+  status: OutboxMessageStatus;
+  retryCount: number;
+  enqueuedAt: number;
+}
+
 export type ChatConnectionState =
   | "idle"
   | "connecting"
