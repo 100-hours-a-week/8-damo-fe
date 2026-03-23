@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useCallback, useMemo, useRef } from "react";
 import {
   useInfiniteQuery,
@@ -44,6 +45,21 @@ function toValidPageParam(
 
 export function getLightningChatMessagesQueryKey(lightningId: string) {
   return ["lightning", "chat", "messages", lightningId] as const;
+}
+
+function getChatLoadErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.errorMessage ?? "채팅을 불러올 수 없습니다.";
+  }
+
+  return error instanceof Error && error.message
+    ? error.message
+    : "채팅을 불러올 수 없습니다.";
+}
+
+function getChatLoadErrorStatus(error: unknown) {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
 }
 
 export function useLightningChatInfinite({
@@ -100,6 +116,15 @@ export function useLightningChatInfinite({
       return Number(current) > Number(max) ? current : max;
     }, "0");
   }, [messages]);
+  const chatLoadErrorMessage = useMemo(() => {
+    if (!query.isError) return null;
+    return getChatLoadErrorMessage(query.error);
+  }, [query.error, query.isError]);
+  const chatLoadErrorStatus = useMemo(() => {
+    if (!query.isError) return null;
+    return getChatLoadErrorStatus(query.error);
+  }, [query.error, query.isError]);
+
   const markInitialized = useCallback(() => {
     isInitializedRef.current = true;
   }, []);
@@ -127,6 +152,8 @@ export function useLightningChatInfinite({
     anchorCursor,
     readBoundary,
     maxMessageId,
+    chatLoadErrorMessage,
+    chatLoadErrorStatus,
     recoverMissedMessages,
     fetchPreviousPage,
     markInitialized,

@@ -36,6 +36,7 @@ export class SocketManager {
   private tokenReissuePromise: Promise<string | null> | null = null;
   private reconnectFailureCount = 0;
   private readonly maxReconnectWithCurrentToken = 1;
+  private reconnectListeners = new Set<() => void>();
 
   constructor(opts: SocketManagerOptions) {
     this.brokerURL = opts.brokerURL;
@@ -109,6 +110,7 @@ export class SocketManager {
           this.client = connectedClient;
           this.reconnectFailureCount = 0;
           this.restoreAllSubscriptions();
+          this.notifyReconnectListeners();
 
           if (!handshakeDone) {
             handshakeDone = true;
@@ -361,6 +363,17 @@ export class SocketManager {
     this.log("unsubscribe", { key });
   }
 
+  isPublishable(): boolean {
+    return isSafeToUseClient(this.client);
+  }
+
+  addReconnectListener(fn: () => void): () => void {
+    this.reconnectListeners.add(fn);
+    return () => {
+      this.reconnectListeners.delete(fn);
+    };
+  }
+
   publish(destination: string, body: string) {
     const client = this.client;
     if (!isSafeToUseClient(client)) {
@@ -392,6 +405,15 @@ export class SocketManager {
       this.log("subscribed", { key, destination: def.destination });
     } catch (error) {
       this.log("subscribe failed", { key, error });
+    }
+  }
+
+  private notifyReconnectListeners() {
+    for (const listener of this.reconnectListeners) {
+      try {
+        listener();
+      } catch {
+      }
     }
   }
 

@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { IMessage } from "@stomp/stompjs";
 import type { QueryClient } from "@tanstack/react-query";
 import { updateUnreadCountInCache } from "@/src/lib/lightning/chat/update-unread-count-in-cache";
+import { appendChatMessagesToCache } from "@/src/lib/lightning/chat/append-chat-messages-to-cache";
 import type {
   ChatBroadcastMessage,
   ChatBroadcastMessagePayload,
@@ -17,6 +18,7 @@ interface UseLightningChatMessageHandlerOptions {
   setError: Dispatch<SetStateAction<string | null>>;
   currentUserId: number | null;
   enqueueIncomingMessage: (message: ChatBroadcastMessage) => void;
+  acknowledgeOutboxEcho?: (clientMessageId: string) => boolean;
 }
 
 function normalizeSocketMessage(
@@ -37,6 +39,7 @@ function normalizeSocketMessage(
     unreadCount: Number.isFinite(parsedUnreadCount)
       ? parsedUnreadCount
       : 0,
+    clientMessageId: raw.clientMessageId ?? undefined,
   };
 }
 
@@ -46,6 +49,7 @@ export function useLightningChatMessageHandler({
   setError,
   currentUserId,
   enqueueIncomingMessage,
+  acknowledgeOutboxEcho,
 }: UseLightningChatMessageHandlerOptions) {
   return useCallback(
     (payload: IMessage) => {
@@ -55,9 +59,16 @@ export function useLightningChatMessageHandler({
           case "CHAT_MESSAGE": {
             const incoming = normalizeSocketMessage(parsed.payload, lightningId);
             if (process.env.NEXT_PUBLIC_APP_ENV !== "prod") {
-              performance.mark(`chat:ws-received:${incoming.messageId}`); 
+              performance.mark(`chat:ws-received:${incoming.messageId}`);
             }
             console.log("[WS][CHAT_MESSAGE]", { incoming, });
+
+            if (incoming.clientMessageId && acknowledgeOutboxEcho?.(incoming.clientMessageId)) {
+              appendChatMessagesToCache(queryClient, lightningId, [incoming]);
+              setError(null);
+              return;
+            }
+
             enqueueIncomingMessage(incoming);
             setError(null);
             return;
@@ -86,6 +97,6 @@ export function useLightningChatMessageHandler({
         setError("메시지를 읽지 못했습니다.");
       }
     },
-    [currentUserId, enqueueIncomingMessage, lightningId, queryClient, setError]
+    [acknowledgeOutboxEcho, currentUserId, enqueueIncomingMessage, lightningId, queryClient, setError]
   );
 }

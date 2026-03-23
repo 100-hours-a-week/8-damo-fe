@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useLightningChatSocket } from "@/src/hooks/lightning/chat/use-lightning-chat-socket";
 import { useLightningChatInfinite } from "@/src/hooks/lightning/chat/use-lightning-chat-infinite";
+import { useLightningChatOutbox } from "@/src/hooks/lightning/chat/use-lightning-chat-outbox";
 import { useUserStore } from "@/src/stores/user-store";
 import { ChatMessageList } from "./chat-message-list";
 import { ChatInput } from "./chat-input";
 
 interface Props {
   lightningId: string;
+  onNotFound?: () => void;
 }
 
-export function ChatBody({ lightningId }: Props) {
-  const queryClient = useQueryClient();
+export function ChatBody({ lightningId, onNotFound }: Props) {
   const currentUserId = useUserStore((state) => state.user?.userId ?? null);
-  const isDevEnv = process.env.NEXT_PUBLIC_APP_ENV === "dev";
+  const user = useUserStore((state) => state.user);
 
   const {
     data,
@@ -32,7 +32,8 @@ export function ChatBody({ lightningId }: Props) {
     fetchNextPage,
     markInitialized,
     recoverMissedMessages,
-    error: queryError,
+    chatLoadErrorMessage,
+    chatLoadErrorStatus,
   } = useLightningChatInfinite({ lightningId });
 
   const hasInitialPage = Boolean(data?.pages?.[0]);
@@ -45,9 +46,18 @@ export function ChatBody({ lightningId }: Props) {
       ? String(messages[messages.length - 1].messageId)
       : initialLastReadMessageId;
 
-  const { error: socketError, sendMessage } = useLightningChatSocket({
+  const {
+    outboxMessages,
+    sendOptimisticMessage,
+    acknowledgeEcho,
+    retryMessage,
+    cancelMessage,
+  } = useLightningChatOutbox({ lightningId, user });
+
+  const { error: socketError } = useLightningChatSocket({
     lightningId,
     enabled: hasInitialPage,
+    acknowledgeOutboxEcho: acknowledgeEcho,
   });
 
   useEffect(() => {
@@ -59,8 +69,12 @@ export function ChatBody({ lightningId }: Props) {
     return () => window.removeEventListener("focus", handleFocus);
   }, [recoverMissedMessages]);
 
-  const errorMessage =
-    socketError ?? (queryError instanceof Error ? queryError.message : null);
+  useEffect(() => {
+    if (chatLoadErrorStatus !== 404) return;
+    onNotFound?.();
+  }, [chatLoadErrorStatus, onNotFound]);
+
+  const errorMessage = socketError ?? chatLoadErrorMessage;
 
   if (isPending && !data) {
     return (
@@ -79,6 +93,7 @@ export function ChatBody({ lightningId }: Props) {
     <>
       <ChatMessageList
         messages={messages}
+        outboxMessages={outboxMessages}
         currentUserId={currentUserId}
         readBoundary={readBoundary}
         initialScrollMode={initialScrollMode}
@@ -91,6 +106,8 @@ export function ChatBody({ lightningId }: Props) {
         fetchNextPage={fetchNextPage}
         markInitialized={markInitialized}
         lastChatMessageId={lastChatMessageId}
+        onRetry={retryMessage}
+        onCancel={cancelMessage}
       />
 
       {errorMessage && (
@@ -99,7 +116,7 @@ export function ChatBody({ lightningId }: Props) {
         </p>
       )}
 
-      <ChatInput onSend={sendMessage} />
+      <ChatInput onSend={sendOptimisticMessage} />
     </>
   );
 }
