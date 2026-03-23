@@ -1,7 +1,12 @@
 /// <reference lib="webworker" />
-import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist'
-import { Serwist } from 'serwist'
-import { defaultCache } from '@serwist/next/worker'
+import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from 'serwist'
+import {
+  CacheFirst,
+  ExpirationPlugin,
+  NetworkFirst,
+  NetworkOnly,
+  Serwist,
+} from 'serwist'
 import { initializeApp } from 'firebase/app'
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw'
 
@@ -63,18 +68,97 @@ self.addEventListener('notificationclick', (event) => {
   )
 })
 
+// ============ Custom Runtime Caching ============
+
+const runtimeCaching: RuntimeCaching[] = [
+  // Next.js 정적 에셋 (content-hash 포함, 장기 캐싱 안전)
+  {
+    matcher: /\/_next\/static\/.+/i,
+    handler: new CacheFirst({
+      cacheName: 'next-static',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 64,
+          maxAgeSeconds: 30 * 24 * 60 * 60,
+        }),
+      ],
+    }),
+  },
+  // Next.js 최적화 이미지
+  {
+    matcher: /\/_next\/image\?url=.+$/i,
+    handler: new CacheFirst({
+      cacheName: 'next-image',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 64,
+          maxAgeSeconds: 7 * 24 * 60 * 60,
+        }),
+      ],
+    }),
+  },
+  // 정적 이미지 에셋
+  {
+    matcher: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
+    handler: new CacheFirst({
+      cacheName: 'static-images',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 64,
+          maxAgeSeconds: 7 * 24 * 60 * 60,
+        }),
+      ],
+    }),
+  },
+  // API / BFF — 캐싱하지 않음
+  {
+    matcher: ({ sameOrigin, url: { pathname } }) =>
+      sameOrigin &&
+      (pathname.startsWith('/api/') || pathname.startsWith('/bff/')),
+    handler: new NetworkOnly(),
+  },
+  // RSC 네비게이션 (App Router)
+  {
+    matcher: ({ request, sameOrigin, url: { pathname } }) =>
+      request.headers.get('RSC') === '1' &&
+      sameOrigin &&
+      !pathname.startsWith('/api/'),
+    handler: new NetworkFirst({
+      cacheName: 'pages-rsc',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60,
+        }),
+      ],
+    }),
+  },
+  // 페이지 네비게이션 (오프라인 폴백용)
+  {
+    matcher: ({ request }) => request.destination === 'document',
+    handler: new NetworkFirst({
+      cacheName: 'pages',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60,
+        }),
+      ],
+    }),
+  },
+]
+
 // ============ Serwist (Precaching + Runtime Caching) ============
 
 const serwist = new Serwist({
   precacheEntries: [
     ...self.__SW_MANIFEST,
-    // 오프라인 fallback 페이지 명시적 precache
     { url: '/offline', revision: null },
   ],
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: false,
-  runtimeCaching: defaultCache,
+  runtimeCaching,
   fallbacks: {
     entries: [
       {
