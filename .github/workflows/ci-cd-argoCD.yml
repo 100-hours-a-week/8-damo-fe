@@ -97,7 +97,8 @@ jobs:
             echo "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}"
             echo "NEXT_PUBLIC_FIREBASE_APPID=${{ secrets.NEXT_PUBLIC_FIREBASE_APPID }}"
             echo "NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}"
-            echo "APP_ENV=dev"
+            echo "APP_ENV=prod"
+            echo "NEXT_PUBLIC_APP_ENV=prod"
           } > .env
 
       - name: Resolve environment
