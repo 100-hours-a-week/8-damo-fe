@@ -12,6 +12,7 @@ export interface ChatBroadcastMessagePayload {
   senderNickname: string | undefined;
   senderImagePath?: string | null;
   unreadCount: number;
+  clientMessageId?: string;
 }
 
 export interface UpdateUnreadCountEventPayload {
@@ -36,6 +37,7 @@ export type WsEventMessage =
 export interface ChatMessageRequest {
   chatType: ChatType;
   content: string;
+  clientMessageId?: string;
 }
 
 export interface ChatBroadcastMessage {
