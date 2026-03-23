@@ -10,9 +10,10 @@ import { ChatInput } from "./chat-input";
 
 interface Props {
   lightningId: string;
+  onNotFound?: () => void;
 }
 
-export function ChatBody({ lightningId }: Props) {
+export function ChatBody({ lightningId, onNotFound }: Props) {
   const currentUserId = useUserStore((state) => state.user?.userId ?? null);
   const user = useUserStore((state) => state.user);
 
@@ -32,6 +33,7 @@ export function ChatBody({ lightningId }: Props) {
     markInitialized,
     recoverMissedMessages,
     chatLoadErrorMessage,
+    chatLoadErrorStatus,
   } = useLightningChatInfinite({ lightningId });
 
   const hasInitialPage = Boolean(data?.pages?.[0]);
@@ -66,6 +68,11 @@ export function ChatBody({ lightningId }: Props) {
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, [recoverMissedMessages]);
+
+  useEffect(() => {
+    if (chatLoadErrorStatus !== 404) return;
+    onNotFound?.();
+  }, [chatLoadErrorStatus, onNotFound]);
 
   const errorMessage = socketError ?? chatLoadErrorMessage;
 
