@@ -50,6 +50,7 @@ export interface ChatBroadcastMessage {
   senderNickname: string | undefined;
   senderImagePath?: string | null;
   unreadCount: number;
+  clientMessageId?: string;
 }
 
 export type ChatConnectionState =
