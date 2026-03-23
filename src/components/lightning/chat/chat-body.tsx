@@ -31,7 +31,7 @@ export function ChatBody({ lightningId }: Props) {
     fetchNextPage,
     markInitialized,
     recoverMissedMessages,
-    error: queryError,
+    chatLoadErrorMessage,
   } = useLightningChatInfinite({ lightningId });
 
   const hasInitialPage = Boolean(data?.pages?.[0]);
@@ -67,8 +67,7 @@ export function ChatBody({ lightningId }: Props) {
     return () => window.removeEventListener("focus", handleFocus);
   }, [recoverMissedMessages]);
 
-  const errorMessage =
-    socketError ?? (queryError instanceof Error ? queryError.message : null);
+  const errorMessage = socketError ?? chatLoadErrorMessage;
 
   if (isPending && !data) {
     return (
