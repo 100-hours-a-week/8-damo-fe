@@ -57,6 +57,11 @@ function getChatLoadErrorMessage(error: unknown) {
     : "채팅을 불러올 수 없습니다.";
 }
 
+function getChatLoadErrorStatus(error: unknown) {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+}
+
 export function useLightningChatInfinite({
   lightningId,
   size = CHAT_PAGE_SIZE,
@@ -115,6 +120,10 @@ export function useLightningChatInfinite({
     if (!query.isError) return null;
     return getChatLoadErrorMessage(query.error);
   }, [query.error, query.isError]);
+  const chatLoadErrorStatus = useMemo(() => {
+    if (!query.isError) return null;
+    return getChatLoadErrorStatus(query.error);
+  }, [query.error, query.isError]);
 
   const markInitialized = useCallback(() => {
     isInitializedRef.current = true;
@@ -144,6 +153,7 @@ export function useLightningChatInfinite({
     readBoundary,
     maxMessageId,
     chatLoadErrorMessage,
+    chatLoadErrorStatus,
     recoverMissedMessages,
     fetchPreviousPage,
     markInitialized,
