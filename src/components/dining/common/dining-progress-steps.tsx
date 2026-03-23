@@ -1,4 +1,4 @@
-import { UserCheck, Lightbulb, Vote, Calendar } from "lucide-react";
+import { UserCheck, Lightbulb, Vote, Calendar, Check } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import type { DiningStatus } from "@/src/types/api/dining";
 
@@ -54,31 +54,71 @@ export function DiningProgressSteps({ diningStatus }: DiningProgressStepsProps) 
       <div className="flex flex-col gap-4">
         {STEPS.map((step, index) => {
           const Icon = step.icon;
+          const isCompleted = index < activeIndex;
           const isActive = index === activeIndex;
+          const isPending = index > activeIndex;
+          const hasNextStep = index < STEPS.length - 1;
 
           return (
             <div key={step.label} className="flex items-start gap-3">
-              <div
-                className={cn(
-                  "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
-                  isActive ? "bg-[#ff8d28]" : "bg-[#e5e7eb]"
-                )}
-              >
+              <div className="flex shrink-0 flex-col items-center">
                 <div
                   className={cn(
-                    "size-3 rounded-full",
-                    isActive ? "bg-white" : "bg-[#9ca3af]"
+                    "mt-0.5 flex size-8 items-center justify-center rounded-full",
+                    isCompleted && "bg-[#16a34a]",
+                    isActive && "bg-[#ff8d28]",
+                    isPending && "bg-[#e5e7eb]"
                   )}
-                />
+                >
+                  {isCompleted ? (
+                    <Check className="size-6 text-white" />
+                  ) : (
+                    <div
+                      className={cn(
+                        "size-3 rounded-full",
+                        isActive ? "bg-white" : "bg-[#9ca3af]"
+                      )}
+                    />
+                  )}
+                </div>
+                {hasNextStep ? (
+                  <div
+                    className={cn(
+                      "mt-1 h-8 w-0.5 rounded-full",
+                      isCompleted ? "bg-[#16a34a]" : "bg-[#e5e7eb]"
+                    )}
+                  />
+                ) : null}
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  <Icon className="size-4 text-[#4a5565]" />
-                  <p className="text-base font-semibold leading-6 text-[#101828]">
+                  <Icon
+                    className={cn(
+                      "size-6",
+                      isCompleted && "text-[#16a34a]",
+                      isActive && "text-[#ff8d28]",
+                      isPending && "text-[#4a5565]"
+                    )}
+                  />
+                  <p
+                    className={cn(
+                      "text-base font-semibold leading-6",
+                      isCompleted && "text-[#16a34a]",
+                      isActive && "text-[#101828]",
+                      isPending && "text-[#101828]"
+                    )}
+                  >
                     {step.label}
                   </p>
                 </div>
-                <p className="text-sm leading-5 text-[#4a5565]">
+                <p
+                  className={cn(
+                    "text-sm leading-6",
+                    isCompleted && "text-[#15803d]",
+                    isActive && "text-[#4a5565]",
+                    isPending && "text-[#6b7280]"
+                  )}
+                >
                   {step.description}
                 </p>
               </div>
