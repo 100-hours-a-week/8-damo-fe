@@ -125,15 +125,15 @@ export function TutorialPageContent() {
         className="min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth no-scrollbar"
       >
         <div className="flex h-full">
-          {TUTORIAL_IMAGES.map((image) => (
+          {TUTORIAL_IMAGES.map((image, index) => (
             <div key={image.src} className="relative h-full w-full shrink-0 snap-center">
-              <Image
+              <img
                 src={image.src}
                 alt={image.alt}
-                fill
-                priority
-                sizes="430px"
-                className="object-contain"
+                className="h-full w-full object-contain"
+                loading={index === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                draggable={false}
               />
             </div>
           ))}
