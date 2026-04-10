@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --experimental-https --experimental-https-key ./localhost-key.pem --experimental-https-cert ./localhost.pem",
     "build": "next build --webpack",
     "postbuild": "node scripts/inject-firebase-sw.js",
     "analyze": "ANALYZE=true next build --webpack",
