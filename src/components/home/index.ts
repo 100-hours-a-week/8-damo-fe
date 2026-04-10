@@ -1,5 +1,6 @@
 // Header
 export { HomeHeader } from "./home-header";
+export { HomeTutorialGate } from "./home-tutorial-gate";
 
 // Sections
 export { AdBannerSection } from "./ad-banner-section";

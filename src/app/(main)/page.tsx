@@ -1,5 +1,6 @@
 import {
     AdBannerSection,
+    HomeTutorialGate,
     WeeklyDiningScheduleSection,
     WeeklyPopularRestaurantsSection,
 } from "@/src/components/home";
@@ -11,6 +12,7 @@ import {
 export default function HomePage() {
     return (
         <>
+            <HomeTutorialGate />
             <Header showBackButton={false} showMoreButton={true} showAlarmButton={true} />
             <main className="flex min-h-screen flex-col items-center gap-6 px-4 pb-24">
                 <AdBannerSection/>
