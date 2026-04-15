@@ -1,12 +1,13 @@
 'use client';
 
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
+import { ROUTES } from '@/src/constants/routes';
 import { cn } from '@/src/lib/utils';
 import { hasSeenTutorial, markTutorialAsSeen } from '@/src/lib/tutorial/storage';
+import { useUserStore } from '@/src/stores/user-store';
 
 const TUTORIAL_IMAGES = [
   {
@@ -31,8 +32,18 @@ const TUTORIAL_IMAGES = [
   },
 ] as const;
 
+function normalizeRedirectPath(path: string | null): string | null {
+  if (!path) {
+    return null;
+  }
+
+  return path.startsWith('/') ? path : null;
+}
+
 export function TutorialPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const user = useUserStore((state) => state.user);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const isClosingRef = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -44,7 +55,13 @@ export function TutorialPageContent() {
 
     isClosingRef.current = true;
     markTutorialAsSeen();
-    router.replace('/');
+
+    const redirectPath = normalizeRedirectPath(searchParams.get('redirect'));
+    const loginPath = redirectPath
+      ? `${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirectPath)}`
+      : ROUTES.LOGIN;
+
+    router.replace(user ? ROUTES.MAIN : loginPath);
   };
 
   const closeTutorialFromEffect = useEffectEvent(() => {
@@ -53,12 +70,17 @@ export function TutorialPageContent() {
 
   useEffect(() => {
     if (hasSeenTutorial()) {
-      router.replace('/');
+      closeTutorialFromEffect();
       return;
     }
 
-    window.history.replaceState(window.history.state, '', '/');
-    window.history.pushState({ tutorial: true }, '', '/tutorial');
+    const redirectPath = normalizeRedirectPath(searchParams.get('redirect'));
+    const tutorialPath = redirectPath
+      ? `${ROUTES.TUTORIAL}?redirect=${encodeURIComponent(redirectPath)}`
+      : ROUTES.TUTORIAL;
+
+    window.history.replaceState(window.history.state, '', ROUTES.MAIN);
+    window.history.pushState({ tutorial: true }, '', tutorialPath);
 
     const handlePopState = () => {
       closeTutorialFromEffect();
@@ -69,7 +91,7 @@ export function TutorialPageContent() {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [router]);
+  }, [searchParams]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
