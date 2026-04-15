@@ -3,7 +3,7 @@ import type { User, OnboardingStatus } from '@/src/stores/user-store';
 /**
  * Guard 검사를 건너뛰는 예외 경로
  */
-const BYPASS_ROUTES = ['/kakao/callback', '/login-test', '/groups/preview'] as const;
+const BYPASS_ROUTES = ['/kakao/callback', '/login-test', '/groups/preview', '/tutorial'] as const;
 
 /**
  * 온보딩 상태별 허용 경로 정의
