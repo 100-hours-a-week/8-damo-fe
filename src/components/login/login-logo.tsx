@@ -2,7 +2,7 @@ export function LoginLogo(){
     return <div className="flex flex-col items-center gap-10 text-primary sm:gap-16">
       {/* Logo / Title */}
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-        다모
+        Damo
       </h1>
 
       {/* Tagline */}

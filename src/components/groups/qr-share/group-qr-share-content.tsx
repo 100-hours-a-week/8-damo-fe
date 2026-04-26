@@ -36,7 +36,7 @@ export function GroupQrShareContent({ groupId, groupName }: GroupQrShareContentP
           objectType: "feed",
           content: {
             title: `${groupName} 그룹 초대`,
-            description: "다모 그룹에 참여하세요!",
+            description: "Damo 그룹에 참여하세요!",
             imageUrl: shareImageUrl,
             link: {
               mobileWebUrl: previewUrl,

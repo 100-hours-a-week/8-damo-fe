@@ -22,7 +22,7 @@ export function LoginPromptModal({
   onOpenChange,
   onLogin,
   title = "로그인이 필요합니다",
-  description = "초대받은 다모 그룹에 참가하려면 카카오 로그인이 필요합니다.",
+  description = "초대받은 Damo 그룹에 참가하려면 카카오 로그인이 필요합니다.",
 }: LoginPromptModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

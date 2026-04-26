@@ -18,25 +18,25 @@ interface RecommendationPendingViewProps {
 const STATUS_UI_CONFIG: RecommendationPendingStatusUiMap = {
   idle: {
     label: "준비 중",
-    description: "다모 AI봇들을 모아볼까요? 🏘️",
+    description: "Damo AI봇들을 모아볼까요? 🏘️",
     panelKind: "waiting",
     tone: "normal",
   },
   connecting: {
     label: "연결 중",
-    description: "다모 AI봇들을 모으고 있어요.",
+    description: "Damo AI봇들을 모으고 있어요.",
     panelKind: "waiting",
     tone: "normal",
   },
   connected: {
     label: "대화 시작",
-    description: "다모 AI봇들이 모두 모였어요.",
+    description: "Damo AI봇들이 모두 모였어요.",
     panelKind: "waiting",
     tone: "normal",
   },
   streaming: {
     label: "수집 중",
-    description: "다모 AI봇들이 메뉴 회의를 하고 있어요 👨‍🍳🤖",
+    description: "Damo AI봇들이 메뉴 회의를 하고 있어요 👨‍🍳🤖",
     panelKind: "streaming",
     tone: "normal",
   },

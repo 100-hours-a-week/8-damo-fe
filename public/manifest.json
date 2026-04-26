@@ -1,6 +1,6 @@
 {
-  "name": "다모",
-  "short_name": "다모",
+  "name": "Damo",
+  "short_name": "Damo",
   "description": "인원 · 예산 · 취향 한 번에 고려해서 회식 장소 바로 추천",
   "start_url": "/",
   "display": "standalone",

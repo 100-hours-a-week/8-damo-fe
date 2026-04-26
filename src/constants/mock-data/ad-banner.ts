@@ -4,7 +4,7 @@ import type { AdBanner } from "@/src/types/home";
 export const mockAdBanner: AdBanner = {
     id: "banner-1",
     imageUrl: "/images/banners/promotion-banner.png",
-    title: "다모 오픈 기념 이벤트",
+    title: "Damo 오픈 기념 이벤트",
     linkUrl: "/events/launch",
 };
 

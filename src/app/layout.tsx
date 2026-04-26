@@ -16,13 +16,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "다모",
+  title: "Damo",
   description: "인원 · 예산 · 취향 한 번에 고려해서 회식 장소 바로 추천",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "다모",
+    title: "Damo",
   },
   icons: {
     icon: [

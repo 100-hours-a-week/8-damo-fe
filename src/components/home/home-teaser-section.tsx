@@ -16,7 +16,7 @@ export function HomeTeaserSection({ className }: HomeTeaserSectionProps) {
       {/* Header */}
       <div className="mb-4 flex items-center gap-2">
         <Sparkles className="size-5 text-primary" aria-hidden />
-        <h2 className="text-lg font-bold">다모가 곧 도와줄게요</h2>
+        <h2 className="text-lg font-bold">Damo가 곧 도와줄게요</h2>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
           준비 중
         </span>
