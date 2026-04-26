@@ -25,6 +25,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <LoginTutorialGate />
       <LoginLogo />
       <LoginButton className="h-auto w-full max-w-xs gap-2 px-6 py-3" redirectTo={redirectTo} />
+      <footer className="absolute bottom-6 text-xs text-muted-foreground">
+        © 2026 Damo. All rights reserved.
+      </footer>
     </div>
   );
 }
