@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DAMO (다모)
 
-## Getting Started
+> Damo(다모)는 개인의 미세한 취향과 식습관을 반영하여 AI가 최적의 장소를 제안하고 실시간 소통을 돕는 회식 큐레이션 서비스입니다.
 
-First, run the development server:
+## 프로젝트 개요
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+회식 장소 하나 정할 때마다 알레르기를 체크하고, 못 먹는 음식을 일일이 물어보는 일은 이제 그만해도 괜찮습니다. DAMO는 사용자가 온보딩에서 남긴 아주 사소한 취향까지 기억해 두었다가, 입맛을 완벽하게 반영하는 회식 자리를 추천해줍니다.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+결과만 툭 던져주는 지루한 방식 대신 DAMO의 AI 에이전트는 최적의 장소를 찾아가는 고민의 과정을 **실시간 스트리밍**으로 투명하게 공유합니다. AI가 어떤 논리로 우리 팀에 딱 맞는 장소를 골라내는지 지켜보는 것만으로도 대기 시간은 즐거운 소통의 순간이 됩니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+오늘 갑자기 회식이 당긴다면 AI가 추천한 식당으로 즉시 번개 모임을 열어보세요. 방이 열리는 순간 시작되는 실시간 채팅으로 모여든 팀원들과 대화하며, 복잡한 절차 없이 그 자리에서 바로 약속을 확정할 수 있습니다.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+DAMO는 팀원 한 명 한 명의 식습관이 존중받으면서도, 함께하는 즐거움이 반감되지 않는 배려 있는 미식 경험을 꿈꿉니다. 회식 준비의 스트레스는 DAMO에게 맡기고, 팀원들과 맛있는 음식을 즐기는 것은 어떨까요?
 
-## Learn More
+## 프로젝트 설계 문서
 
-To learn more about Next.js, take a look at the following resources:
+- [기술 스택 선정](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%5BFE%5D-%EA%B8%B0%EC%88%A0-%EC%8A%A4%ED%83%9D-%EC%84%A0%EC%A0%95)
+- [유저 플로우 차트](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%5BFE%5D-%EC%9C%A0%EC%A0%80-%ED%94%8C%EB%A1%9C%EC%9A%B0-%EC%B0%A8%ED%8A%B8)
+- [프로젝트 도메인 테크스펙 (Auth / 사용자)](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%F0%9F%A7%91%E2%80%8D%F0%9F%A7%91%E2%80%8D%F0%9F%A7%92%E2%80%8D%F0%9F%A7%92-Auth-Users-%EB%8F%84%EB%A9%94%EC%9D%B8)
+- [프로젝트 도메인 테크스펙 (회식)](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%F0%9F%8D%B4%EA%B7%B8%EB%A3%B9-%ED%9A%8C%EC%8B%9D-%EB%8F%84%EB%A9%94%EC%9D%B8)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 팀 소개
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+![다모-팀-소개](https://github.com/100-hours-a-week/8-damo-wiki/blob/master/8%E1%84%90%E1%85%B5%E1%86%B7_%E1%84%87%E1%85%A1%E1%86%AF%E1%84%91%E1%85%AD%E1%84%8C%E1%85%A1%E1%84%85%E1%85%AD/8%E1%84%90%E1%85%B5%E1%86%B7-%E1%84%87%E1%85%A1%E1%86%AF%E1%84%91%E1%85%AD%E1%84%8C%E1%85%A1%E1%84%85%E1%85%AD_page-0004.jpg?raw=true)
 
-## Deploy on Vercel
+### 협업 과정
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- 2주 스프린트 3회 사이클로 팀과 일정을 조율하며 배포까지 완료했습니다.
+- 매 스프린트마다 팀원들과 함께 KPT 회고를 진행했습니다. 서로의 성장을 돕는 피드백을 주고받으며, 유지해야 할 강점과 개선할 지점들을 논의하며 실천에 옮겼습니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 주요 기능
+
+### 1) 그룹 기능
+
+![다모-그룹-기능](https://github.com/100-hours-a-week/8-damo-wiki/blob/master/%EA%B8%B0%EB%8A%A5%EC%86%8C%EA%B0%9C/%EA%B7%B8%EB%A3%B9%EA%B8%B0%EB%8A%A5%EC%86%8C%EA%B0%9C.png?raw=true)
+
+- 날짜, 예산 등 기본 정보 입력 후 그룹원들의 참석 투표를 통해 최적의 장소 선정을 위한 실시간 인원을 파악합니다.
+- 참석자 전원의 취향과 예산을 분석한 AI의 추론 과정을 **SSE 실시간 스트리밍으로** 공유하며 최적의 후보지를 제안받습니다.
+- 지도를 보며 후보 장소를 투표하여 최종 목적지를 결정하고, 확정된 일정은 **FCM 기반 푸시 알림으로** 공지합니다.
+
+### 2) AI 스트리밍 기능
+
+![다모-스트리밍-기능](https://github.com/100-hours-a-week/8-damo-wiki/blob/master/%EA%B8%B0%EB%8A%A5%EC%86%8C%EA%B0%9C/AI%EC%8A%A4%ED%8A%B8%EB%A6%AC%EB%B0%8D%EC%86%8C%EA%B0%9C.png?raw=true)
+
+- 회식 참석자 전원의 식습관과 취향을 반영한 개별 AI 페르소나들이 실시간으로 의견을 나누며 최적의 합의점을 찾아갑니다.
+- AI가 장소를 선정하는 모든 사고 과정을 **SSE(Server-Sent Events) 스트리밍**으로 생생하게 공유하여, 대기 시간조차 흥미로운 관전의 순간으로 바뀝니다.
+- 단순히 식당을 제안하는 것에 그치지 않고, 팀원들의 알레르기 정보나 선호도를 반영한 구체적인 추천 사유를 생성하여 결과의 신뢰도를 높입니다.
+
+### 3) 번개 모임 기능
+
+![다모-번개-기능](https://github.com/100-hours-a-week/8-damo-wiki/blob/master/%EA%B8%B0%EB%8A%A5%EC%86%8C%EA%B0%9C/%EB%B2%88%EA%B0%9C%EB%AA%A8%EC%9E%84%EC%86%8C%EA%B0%9C.png?raw=true)
+
+- 나에게 딱 맞는 추천 식당을 기반으로 날짜, 시간, 인원만 설정하면 누구보다 빠르게 번개 모임을 열 수 있습니다.
+- 모집 중인 번개 리스트를 한눈에 확인하고, 내가 참여 중인 모임의 상태를 실시간으로 체크할 수 있습니다.
+- **웹소켓 기반의 단체 채팅을 통해** 번개 모임 참여자들과 막힘없이 소통하며, 세부 약속을 즉석에서 조율하고 확정합니다.
+
+## 프로젝트 아키텍처
+
+![다모-프로젝트-아키텍처](https://github.com/100-hours-a-week/8-damo-wiki/blob/master/%EA%B8%B0%EB%8A%A5%EC%86%8C%EA%B0%9C/%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98%EA%B5%AC%EC%A1%B0%EC%86%8C%EA%B0%9C.png?raw=true)
