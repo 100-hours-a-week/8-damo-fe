@@ -14,10 +14,11 @@ DAMO는 팀원 한 명 한 명의 식습관이 존중받으면서도, 함께하�
 
 ## 프로젝트 설계 문서
 
-- [기술 스택 선정](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%5BFE%5D-%EA%B8%B0%EC%88%A0-%EC%8A%A4%ED%83%9D-%EC%84%A0%EC%A0%95)
-- [유저 플로우 차트](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%5BFE%5D-%EC%9C%A0%EC%A0%80-%ED%94%8C%EB%A1%9C%EC%9A%B0-%EC%B0%A8%ED%8A%B8)
-- [프로젝트 도메인 테크스펙 (Auth / 사용자)](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%F0%9F%A7%91%E2%80%8D%F0%9F%A7%91%E2%80%8D%F0%9F%A7%92%E2%80%8D%F0%9F%A7%92-Auth-Users-%EB%8F%84%EB%A9%94%EC%9D%B8)
-- [프로젝트 도메인 테크스펙 (회식)](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%F0%9F%8D%B4%EA%B7%B8%EB%A3%B9-%ED%9A%8C%EC%8B%9D-%EB%8F%84%EB%A9%94%EC%9D%B8)
+본격적인 개발에 앞서 구현 방향을 구체화하는 설계 과정을 거쳤습니다. 
+
+먼저 다모 서비스에서 사용할 언어, 프레임워크, 라이브러리를 비교하고 선택한 근거를 [기술 스택 선정 문서](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%5BFE%5D-%EA%B8%B0%EC%88%A0-%EC%8A%A4%ED%83%9D-%EC%84%A0%EC%A0%95)에 정리했습니다. 다모 서비스 사용자의 흐름을 시각화하며 화면 구성과 기능 범위를 정의하기 위해 [유저 플로우 차트](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%5BFE%5D-%EC%9C%A0%EC%A0%80-%ED%94%8C%EB%A1%9C%EC%9A%B0-%EC%B0%A8%ED%8A%B8)를 작성했습니다. 이를 바탕으로 화면 설계서를 작성할 수 있었습니다. 
+
+다모 서비스의 주요 도메인인 [사용자 도메인](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%F0%9F%A7%91%E2%80%8D%F0%9F%A7%91%E2%80%8D%F0%9F%A7%92%E2%80%8D%F0%9F%A7%92-Auth-Users-%EB%8F%84%EB%A9%94%EC%9D%B8)과 [회식 도메인](https://github.com/100-hours-a-week/8-damo-wiki/wiki/%F0%9F%8D%B4%EA%B7%B8%EB%A3%B9-%ED%9A%8C%EC%8B%9D-%EB%8F%84%EB%A9%94%EC%9D%B8)에 대한 구체적인 테크 스펙을 문서화했습니다. 화면 설계서를 바탕으로 컴포넌트별 상태 관리 전략을 정의하고, 백엔드 팀원과 API 명세를 맞춰가며 연동 과정에서 필요한 내용을 함께 조율했습니다. 에러 및 예외 처리 방안등을 사전에 논의하며 서비스의 완성도를 다듬을 수 있었습니다.
 
 ## 팀 소개
 
